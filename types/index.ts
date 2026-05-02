@@ -1,0 +1,215 @@
+export type UserRole = "admin" | "manager" | "business";
+export type LeadStage =
+  | "New"
+  | "Qualified"
+  | "Proposal Sent"
+  | "Negotiation"
+  | "Won"
+  | "Lost";
+export type LeadStatus = "Converted" | "Not Converted";
+export type RenewalStatus = "On Track" | "At Risk" | "Renewed" | "Expired";
+export type ProposalStatus = "Draft" | "Sent" | "Accepted" | "Rejected" | "Expired";
+export type InvoiceStatus = "Paid" | "Pending" | "Overdue" | "Partially Paid";
+
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+}
+
+export interface UserRecord extends AuthUser {
+  password: string;
+}
+
+export interface EmployeeRecord {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  salary: number;
+  joiningDate: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SalaryRecord {
+  id: string;
+  employeeId: string;
+  month: string;
+  amount: number;
+  status: "Paid" | "Pending";
+  paidDate?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ProjectRecord {
+  id: string;
+  name: string;
+  clientId: string;
+  status: "Active" | "Completed";
+  budget: number;
+  assignedEmployeeIds: string[];
+  startDate: string;
+  endDate?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface LeadRecord {
+  id: string;
+  name: string;
+  contact: string;
+  source: string;
+  status: LeadStatus;
+  stage: LeadStage;
+  ownerId: string;
+  value: number;
+  acquisitionCost: number;
+  expectedCloseDate?: string;
+  lastContactDate?: string;
+  convertedAt?: string;
+  lostAt?: string;
+  lostReason?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ClientRecord {
+  id: string;
+  name: string;
+  company: string;
+  email: string;
+  phone: string;
+  revenue: number;
+  accountManagerId: string;
+  contractStartDate: string;
+  contractEndDate: string;
+  renewalStatus: RenewalStatus;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ProposalRecord {
+  id: string;
+  title: string;
+  leadId: string;
+  clientId?: string;
+  ownerId: string;
+  amount: number;
+  status: ProposalStatus;
+  sentDate?: string;
+  validUntil: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface InvoiceRecord {
+  id: string;
+  invoiceNumber: string;
+  clientId: string;
+  projectId?: string;
+  ownerId: string;
+  amount: number;
+  issueDate: string;
+  dueDate: string;
+  status: InvoiceStatus;
+  paidDate?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface TargetRecord {
+  id: string;
+  month: string;
+  ownerId: string;
+  targetRevenue: number;
+  targetConversions: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface RevenuePoint {
+  month: string;
+  revenue: number;
+}
+
+export interface LeadPoint {
+  month: string;
+  converted: number;
+  nonConverted: number;
+}
+
+export interface SourcePerformancePoint {
+  source: string;
+  totalLeads: number;
+  wonLeads: number;
+  pipelineValue: number;
+  wonValue: number;
+  acquisitionCost: number;
+  roiPercent: number;
+}
+
+export interface TargetPerformancePoint {
+  month: string;
+  targetRevenue: number;
+  actualRevenue: number;
+  targetConversions: number;
+  actualConversions: number;
+}
+
+export interface DashboardStats {
+  totalEmployees: number;
+  activeProjects: number;
+  convertedLeads: number;
+  monthlyRevenue: number;
+}
+
+export interface DashboardOverview {
+  stats: DashboardStats;
+  revenueTrend: RevenuePoint[];
+  leadConversionTrend: LeadPoint[];
+}
+
+export interface BusinessOverview {
+  stats: {
+    pipelineValue: number;
+    wonValue: number;
+    openProposals: number;
+    outstandingCollections: number;
+    expiringContracts: number;
+    conversionRate: number;
+  };
+  sourcePerformance: SourcePerformancePoint[];
+  targetVsActual: TargetPerformancePoint[];
+  renewalAlerts: ClientRecord[];
+  overdueInvoices: InvoiceRecord[];
+  recentProposals: ProposalRecord[];
+}
+
+export interface SeedPayload {
+  users: UserRecord[];
+  employees: EmployeeRecord[];
+  salaries: SalaryRecord[];
+  projects: ProjectRecord[];
+  leads: LeadRecord[];
+  clients: ClientRecord[];
+  proposals: ProposalRecord[];
+  invoices: InvoiceRecord[];
+  targets: TargetRecord[];
+}
+
+export interface ApiSuccess<T> {
+  success: true;
+  data: T;
+}
+
+export interface ApiError {
+  success: false;
+  message: string;
+  issues?: string[];
+}
+
+export type ApiResponse<T> = ApiSuccess<T> | ApiError;
