@@ -14,9 +14,9 @@ import { ExportMenu } from "@/components/ui/export-menu";
 import { Modal } from "@/components/ui/modal";
 import { PageHeader } from "@/components/ui/page-header";
 import { formatCurrency, formatMonth } from "@/lib/utils";
-import type { AuthUser, TargetPerformancePoint, TargetRecord } from "@/types";
+import type { EmployeeRecord, TargetPerformancePoint, TargetRecord } from "@/types";
 
-function getOwnerName(owners: AuthUser[], ownerId: string) {
+function getOwnerName(owners: EmployeeRecord[], ownerId: string) {
   return owners.find((owner) => owner.id === ownerId)?.name ?? "Unknown owner";
 }
 
@@ -26,7 +26,7 @@ export function TargetsModule({
   performance,
 }: {
   initialTargets: TargetRecord[];
-  owners: AuthUser[];
+  owners: EmployeeRecord[];
   performance: TargetPerformancePoint[];
 }) {
   const { items, isSubmitting, error, clearError, createItem, updateItem, deleteItem } =

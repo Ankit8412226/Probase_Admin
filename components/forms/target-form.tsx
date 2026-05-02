@@ -10,7 +10,7 @@ import {
   SelectInput,
   TextInput,
 } from "@/components/forms/form-primitives";
-import type { AuthUser, TargetRecord } from "@/types";
+import type { EmployeeRecord, TargetRecord } from "@/types";
 
 type TargetPayload = Omit<TargetRecord, "id" | "createdAt" | "updatedAt">;
 
@@ -28,7 +28,7 @@ export function TargetForm({
   onCancel,
   isSubmitting,
 }: {
-  owners: AuthUser[];
+  owners: EmployeeRecord[];
   initialValues?: TargetRecord | null;
   onSubmit: (values: TargetPayload) => Promise<void>;
   onCancel: () => void;
