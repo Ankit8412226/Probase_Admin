@@ -73,6 +73,7 @@ export interface LeadRecord {
   lostAt?: string;
   lostReason?: string;
   notes?: string;
+  emailPitch?: string;
   createdAt?: string;
   updatedAt?: string;
 }

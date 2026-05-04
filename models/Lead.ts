@@ -21,6 +21,7 @@ const leadSchema = new Schema(
     lostAt: { type: String },
     lostReason: { type: String },
     notes: { type: String },
+    emailPitch: { type: String },
   },
   {
     timestamps: true,
