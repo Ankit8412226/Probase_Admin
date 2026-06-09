@@ -1,5 +1,13 @@
 import { model, models, Schema } from "mongoose";
 
+const partPaymentSchema = new Schema(
+  {
+    amount: { type: Number, required: true },
+    paidDate: { type: String, required: true },
+  },
+  { _id: false }
+);
+
 const invoiceSchema = new Schema(
   {
     _id: { type: String, required: true },
@@ -16,6 +24,10 @@ const invoiceSchema = new Schema(
       required: true,
     },
     paidDate: { type: String },
+    partPayments: {
+      type: [partPaymentSchema],
+      default: [],
+    },
   },
   {
     timestamps: true,

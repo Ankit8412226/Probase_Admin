@@ -279,7 +279,8 @@ export function LeadForm({
             onChange={(event) =>
               setValues((current) => ({ ...current, lostReason: event.target.value }))
             }
-            placeholder="Budget freeze"
+            placeholder="Price too high, competitor, budget freeze, etc."
+            required
           />
         </FieldGroup>
       ) : null}

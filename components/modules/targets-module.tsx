@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 
 import { TargetForm } from "@/components/forms/target-form";
+import { TargetPerformanceChart } from "@/components/charts/target-performance-chart";
 import { useDisclosure } from "@/hooks/use-disclosure";
 import { useEntityManager } from "@/hooks/use-entity-manager";
 import { DataTable } from "@/components/tables/data-table";
@@ -124,6 +125,10 @@ export function TargetsModule({
         <div className="rounded-[18px] border border-line bg-black px-4 py-3 text-sm text-white">
           {error}
         </div>
+      ) : null}
+
+      {performance.length > 0 ? (
+        <TargetPerformanceChart data={performance} />
       ) : null}
 
       {items.length ? (

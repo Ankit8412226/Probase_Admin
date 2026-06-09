@@ -71,6 +71,11 @@ export const proposalSchema = z.object({
   validUntil: z.string().min(10),
 });
 
+export const partPaymentSchema = z.object({
+  amount: z.coerce.number().positive("Amount must be greater than zero"),
+  paidDate: z.string().min(10, "Paid date must be a valid date"),
+});
+
 export const invoiceSchema = z.object({
   invoiceNumber: z.string().min(3),
   clientId: z.string().min(1),
@@ -81,6 +86,7 @@ export const invoiceSchema = z.object({
   dueDate: z.string().min(10),
   status: z.enum(["Paid", "Pending", "Overdue", "Partially Paid"]),
   paidDate: z.string().optional().or(z.literal("")),
+  partPayments: z.array(partPaymentSchema).max(3, "Max 3 part payments allowed").optional().default([]),
 });
 
 export const targetSchema = z.object({

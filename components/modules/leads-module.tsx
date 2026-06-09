@@ -290,14 +290,32 @@ Make it ready to send. No placeholders. Be specific, confident, and conversion-f
             {
               key: "stage",
               header: "Stage",
-              render: (lead) => (
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge>{lead.stage}</Badge>
-                  <Badge tone={lead.status === "Converted" ? "success" : "neutral"}>
-                    {lead.status}
-                  </Badge>
-                </div>
-              ),
+              render: (lead) => {
+                const stageTones = {
+                  "New": "neutral",
+                  "Qualified": "info",
+                  "Proposal Sent": "info",
+                  "Negotiation": "alert",
+                  "Won": "success",
+                  "Lost": "danger",
+                } as const;
+
+                return (
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge tone={stageTones[lead.stage]}>{lead.stage}</Badge>
+                      <Badge tone={lead.status === "Converted" ? "success" : "neutral"}>
+                        {lead.status}
+                      </Badge>
+                    </div>
+                    {lead.stage === "Lost" && lead.lostReason && (
+                      <p className="text-[11px] font-medium text-red-600">
+                        Reason: {lead.lostReason}
+                      </p>
+                    )}
+                  </div>
+                );
+              },
             },
             {
               key: "economics",

@@ -68,20 +68,31 @@ export function InvoicesModule({
     const matchesStatus = statusFilter === "All" || invoice.status === statusFilter;
     return Boolean(matchesSearch) && matchesStatus;
   });
-  const exportRows = filteredInvoices.map((invoice) => ({
-    invoiceNumber: invoice.invoiceNumber,
-    client: clients.find((client) => client.id === invoice.clientId)?.company ?? "Unknown client",
-    project: projects.find((project) => project.id === invoice.projectId)?.name ?? "",
-    owner: getLabel(owners, invoice.ownerId),
-    amount: invoice.amount,
-    issueDate: invoice.issueDate,
-    dueDate: invoice.dueDate,
-    status: invoice.status,
-    paidDate: invoice.paidDate ?? "",
-  }));
+  const exportRows = filteredInvoices.map((invoice) => {
+    const totalPaid = invoice.partPayments && invoice.partPayments.length > 0
+      ? invoice.partPayments.reduce((sum, p) => sum + p.amount, 0)
+      : (invoice.status === "Paid" ? invoice.amount : 0);
+    
+    return {
+      invoiceNumber: invoice.invoiceNumber,
+      client: clients.find((client) => client.id === invoice.clientId)?.company ?? "Unknown client",
+      project: projects.find((project) => project.id === invoice.projectId)?.name ?? "Unassigned",
+      bde: getLabel(owners, invoice.ownerId),
+      totalAmount: invoice.amount,
+      amountPaid: totalPaid,
+      remainingBalance: Math.max(0, invoice.amount - totalPaid),
+      issueDate: invoice.issueDate,
+      dueDate: invoice.dueDate,
+      status: invoice.status,
+      paidDate: invoice.paidDate ?? "",
+    };
+  });
   const outstandingAmount = filteredInvoices
     .filter((invoice) => invoice.status !== "Paid")
-    .reduce((sum, invoice) => sum + invoice.amount, 0);
+    .reduce((sum, invoice) => {
+      const paidSum = invoice.partPayments?.reduce((s, p) => s + p.amount, 0) ?? 0;
+      return sum + (invoice.amount - paidSum);
+    }, 0);
   const overdueCount = filteredInvoices.filter((invoice) => invoice.status === "Overdue").length;
 
   async function handleSubmit(values: Omit<InvoiceRecord, "id" | "createdAt" | "updatedAt">) {
@@ -215,8 +226,22 @@ export function InvoicesModule({
             },
             {
               key: "amount",
-              header: "Amount",
-              render: (invoice) => formatCurrency(invoice.amount),
+              header: "Payment details",
+              render: (invoice) => {
+                const totalPaid = invoice.partPayments && invoice.partPayments.length > 0
+                  ? invoice.partPayments.reduce((sum, p) => sum + p.amount, 0)
+                  : (invoice.status === "Paid" ? invoice.amount : 0);
+                const remaining = Math.max(0, invoice.amount - totalPaid);
+
+                return (
+                  <div>
+                    <p className="font-semibold">{formatCurrency(invoice.amount)}</p>
+                    <p className="text-xs text-fog">
+                      Paid: {formatCurrency(totalPaid)} • Due: {formatCurrency(remaining)}
+                    </p>
+                  </div>
+                );
+              },
             },
             {
               key: "timeline",
@@ -232,7 +257,7 @@ export function InvoicesModule({
               key: "status",
               header: "Status",
               render: (invoice) => (
-                <Badge tone={invoice.status === "Paid" ? "success" : invoice.status === "Overdue" ? "warning" : "neutral"}>
+                <Badge tone={invoice.status === "Paid" ? "success" : invoice.status === "Overdue" ? "danger" : "neutral"}>
                   {invoice.status}
                 </Badge>
               ),

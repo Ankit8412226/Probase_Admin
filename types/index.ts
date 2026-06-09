@@ -107,6 +107,11 @@ export interface ProposalRecord {
   updatedAt?: string;
 }
 
+export interface PartPayment {
+  amount: number;
+  paidDate: string;
+}
+
 export interface InvoiceRecord {
   id: string;
   invoiceNumber: string;
@@ -118,6 +123,7 @@ export interface InvoiceRecord {
   dueDate: string;
   status: InvoiceStatus;
   paidDate?: string;
+  partPayments?: PartPayment[];
   createdAt?: string;
   updatedAt?: string;
 }

@@ -512,6 +512,10 @@ const invoices: InvoiceRecord[] = [
     issueDate: "2025-02-01",
     dueDate: "2025-02-15",
     status: "Partially Paid",
+    partPayments: [
+      { amount: 5000, paidDate: "2025-02-05" },
+      { amount: 6000, paidDate: "2025-02-18" },
+    ],
     createdAt: "2025-02-01T09:00:00.000Z",
   },
   {

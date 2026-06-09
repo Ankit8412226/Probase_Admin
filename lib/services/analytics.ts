@@ -95,6 +95,29 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
   };
 }
 
+function getCollectedRevenueForMonth(
+  invoices: Awaited<ReturnType<typeof getInvoices>>,
+  month: string,
+): number {
+  let total = 0;
+  for (const invoice of invoices) {
+    if (invoice.partPayments && invoice.partPayments.length > 0) {
+      const partsSum = invoice.partPayments
+        .filter((p) => toMonth(p.paidDate) === month)
+        .reduce((sum, p) => sum + p.amount, 0);
+      total += partsSum;
+    } else {
+      if (invoice.status === "Paid") {
+        const paidMonth = invoice.paidDate ? toMonth(invoice.paidDate) : toMonth(invoice.issueDate);
+        if (paidMonth === month) {
+          total += invoice.amount;
+        }
+      }
+    }
+  }
+  return total;
+}
+
 function buildRevenueTrend(
   invoices: Awaited<ReturnType<typeof getInvoices>>,
   anchorDate: Date,
@@ -103,9 +126,7 @@ function buildRevenueTrend(
 
   return months.map((month) => ({
     month,
-    revenue: invoices
-      .filter((invoice) => toMonth(invoice.issueDate) === month)
-      .reduce((sum, invoice) => sum + invoice.amount, 0),
+    revenue: getCollectedRevenueForMonth(invoices, month),
   }));
 }
 
@@ -171,7 +192,10 @@ export async function getBusinessOverview(): Promise<BusinessOverview> {
   const closedLeads = leads.filter((lead) => lead.stage === "Won" || lead.stage === "Lost");
   const outstandingCollections = invoices
     .filter((invoice) => invoice.status !== "Paid")
-    .reduce((sum, invoice) => sum + invoice.amount, 0);
+    .reduce((sum, invoice) => {
+      const paidSum = invoice.partPayments?.reduce((s, p) => s + p.amount, 0) ?? 0;
+      return sum + (invoice.amount - paidSum);
+    }, 0);
   const renewalAlerts = clients
     .filter((client) => {
       const contractEnd = new Date(client.contractEndDate);
@@ -244,9 +268,7 @@ function buildTargetVsActual(
     targetRevenue: targets
       .filter((target) => target.month === month)
       .reduce((sum, target) => sum + target.targetRevenue, 0),
-    actualRevenue: invoices
-      .filter((invoice) => toMonth(invoice.issueDate) === month)
-      .reduce((sum, invoice) => sum + invoice.amount, 0),
+    actualRevenue: getCollectedRevenueForMonth(invoices, month),
     targetConversions: targets
       .filter((target) => target.month === month)
       .reduce((sum, target) => sum + target.targetConversions, 0),

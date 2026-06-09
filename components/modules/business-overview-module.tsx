@@ -224,7 +224,13 @@ export function BusinessOverviewModule({
                     {getOwnerName(owners, client.accountManagerId)} • Ends {formatDate(client.contractEndDate)}
                   </p>
                 </div>
-                <Badge tone={client.renewalStatus === "On Track" || client.renewalStatus === "Renewed" ? "success" : "warning"}>
+                <Badge tone={
+                  client.renewalStatus === "On Track" || client.renewalStatus === "Renewed"
+                    ? "success"
+                    : client.renewalStatus === "At Risk"
+                      ? "alert"
+                      : "danger"
+                }>
                   {client.renewalStatus}
                 </Badge>
               </div>
@@ -256,8 +262,23 @@ export function BusinessOverviewModule({
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold">{formatCurrency(invoice.amount)}</span>
-                    <Badge tone={invoice.status === "Overdue" ? "warning" : "neutral"}>
+                    {(() => {
+                      const totalPaid = invoice.partPayments && invoice.partPayments.length > 0
+                        ? invoice.partPayments.reduce((sum, p) => sum + p.amount, 0)
+                        : (invoice.status === "Paid" ? invoice.amount : 0);
+                      const remaining = Math.max(0, invoice.amount - totalPaid);
+                      return (
+                        <div className="text-right mr-1">
+                          <p className="text-sm font-semibold">{formatCurrency(remaining)}</p>
+                          {totalPaid > 0 && (
+                            <p className="text-[10px] text-fog">
+                              Of {formatCurrency(invoice.amount)}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
+                    <Badge tone={invoice.status === "Overdue" ? "danger" : "neutral"}>
                       {invoice.status}
                     </Badge>
                   </div>

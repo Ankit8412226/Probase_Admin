@@ -16,6 +16,7 @@ export interface InvoicePdfData {
   dueDate: string;
   paidDate?: string;
   status: InvoiceRecord["status"];
+  partPayments?: InvoiceRecord["partPayments"];
 }
 
 function num(value: number) {
@@ -147,16 +148,20 @@ export function createInvoicePdfData({
     dueDate: invoice.dueDate,
     paidDate: invoice.paidDate,
     status: invoice.status,
+    partPayments: invoice.partPayments,
   };
 }
 
 export function createInvoicePdfBlob(data: InvoicePdfData) {
-  const balanceDue = data.status === "Paid" ? 0 : data.amount;
+  const totalPaid = data.partPayments && data.partPayments.length > 0
+    ? data.partPayments.reduce((sum, p) => sum + p.amount, 0)
+    : (data.status === "Paid" ? data.amount : 0);
+  const balanceDue = Math.max(0, data.amount - totalPaid);
   const paymentSummary =
     data.status === "Paid"
-      ? `Collected on ${formatDate(data.paidDate)}`
+      ? (data.paidDate ? `Collected on ${formatDate(data.paidDate)}` : "Fully collected")
       : data.status === "Partially Paid"
-        ? "Collections in progress"
+        ? `Partially Paid: ${formatCurrency(totalPaid)} collected`
         : data.status === "Overdue"
           ? "Payment is past due"
           : "Awaiting payment confirmation";
