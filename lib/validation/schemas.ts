@@ -98,6 +98,13 @@ export const targetSchema = z.object({
   targetConversions: z.coerce.number().int().nonnegative(),
 });
 
+export const knowledgeSchema = z.object({
+  title: z.string().min(3),
+  category: z.enum(["objection", "case_study", "pricing", "usp", "other"]),
+  content: z.string().min(10),
+  tags: z.array(z.string()).optional().default([]),
+});
+
 export function formatValidationIssues(error: z.ZodError) {
   return error.issues.map((issue) => `${issue.path.join(".") || "field"}: ${issue.message}`);
 }

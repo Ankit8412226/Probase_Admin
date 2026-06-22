@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Bot, Mail, Pencil, Plus, Search, Trash2 } from "lucide-react";
 
 import { LeadForm } from "@/components/forms/lead-form";
 import { SelectInput, TextInput } from "@/components/forms/form-primitives";
@@ -18,6 +18,7 @@ import { Modal } from "@/components/ui/modal";
 import { PageHeader } from "@/components/ui/page-header";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { AuthUser, LeadRecord } from "@/types";
+import { SalesCopilotSidebar } from "@/components/modules/sales-copilot-sidebar";
 
 function getOwnerName(owners: AuthUser[], ownerId: string) {
   return owners.find((owner) => owner.id === ownerId)?.name ?? "Unassigned";
@@ -59,6 +60,7 @@ export function LeadsModule({
   const [pitchLead, setPitchLead] = useState<LeadRecord | null>(null);
   const [pitchContent, setPitchContent] = useState<string>("");
   const [isGeneratingPitch, setIsGeneratingPitch] = useState(false);
+  const [copilotLead, setCopilotLead] = useState<LeadRecord | null>(null);
 
   async function handleGeneratePitch(lead: LeadRecord) {
     setPitchLead(lead);
@@ -71,59 +73,15 @@ export function LeadsModule({
       return;
     }
     try {
-      const response = await fetch("https://api.fireworks.ai/inference/v1/chat/completions", {
+      const response = await fetch(`/api/leads/${lead.id}/generate-pitch`, {
         method: "POST",
-        headers: {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "Authorization": "Bearer fw_MMBeWAcxv6hAanuvcaUvkH"
-        },
-        body: JSON.stringify({
-          model: "accounts/fireworks/models/deepseek-v4-pro",
-          max_tokens: 4096,
-          top_p: 1,
-          top_k: 40,
-          presence_penalty: 0,
-          frequency_penalty: 0,
-          temperature: 0.6,
-          messages: [
-            {
-              role: "system",
-              content: "You are an expert IT services sales professional at Probase Solution — a premium IT services company. Your job is to write a highly persuasive WhatsApp quotation message that will CONVERT the client. Write in a friendly, professional tone. Use emojis strategically. The message must be ready to copy-paste directly into WhatsApp."
-            },
-            {
-              role: "user",
-              content: `Create a complete WhatsApp quotation message for this lead. The message should introduce Probase Solution, address the client's specific needs from the notes, present our services clearly with pricing range, and end with a strong call to action.
-
-Client Name: ${lead.name}
-Client Contact: ${lead.contact}
-Lead Source: ${lead.source}
-Deal Value: ₹${lead.value.toLocaleString("en-IN")}
-Client Requirements / Notes: ${lead.notes || "General IT services requirement"}
-
-Structure the WhatsApp message with these sections:
-
-1. 👋 Greeting with client name
-2. 🏢 Brief intro about Probase Solution (2-3 lines — premium IT services, custom software, web & app development, digital transformation)
-3. ✅ What We Offer (based on their specific notes/requirements — list 4-5 specific services relevant to them with a short benefit each)
-4. 💰 Investment Summary (give a realistic pricing range based on the deal value of ₹${lead.value.toLocaleString("en-IN")} — mention what's included)
-5. 🎯 Why Choose Us (3 strong USPs of Probase Solution)
-6. 📞 Call to Action (invite them to a quick call or demo, provide contact)
-
-Make it ready to send. No placeholders. Be specific, confident, and conversion-focused.`
-            }
-          ]
-        })
+        headers: { "Content-Type": "application/json" },
       });
       const data = await response.json();
-      const generated = data.choices[0].message.content;
-      setPitchContent(generated);
-      // Auto-save to DB
-      await fetch(`/api/leads/${lead.id}/pitch`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ emailPitch: generated }),
-      });
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Failed to generate");
+      }
+      setPitchContent(data.data.pitch);
     } catch {
       setPitchContent("Failed to generate quotation. Please try again.");
     } finally {
@@ -348,6 +306,14 @@ Make it ready to send. No placeholders. Be specific, confident, and conversion-f
                     <Button
                       variant="secondary"
                       className="h-9 px-3"
+                      onClick={() => setCopilotLead(lead)}
+                      title="Open Sales Co-Pilot"
+                    >
+                      <Bot size={14} />
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      className="h-9 px-3"
                       onClick={() => handleGeneratePitch(lead)}
                       title="Generate Pitch"
                     >
@@ -452,6 +418,11 @@ Make it ready to send. No placeholders. Be specific, confident, and conversion-f
           </div>
         </div>
       </Modal>
+      <SalesCopilotSidebar
+        lead={copilotLead}
+        open={copilotLead !== null}
+        onClose={() => setCopilotLead(null)}
+      />
     </div>
   );
 }

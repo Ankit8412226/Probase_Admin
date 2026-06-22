@@ -208,6 +208,7 @@ export interface SeedPayload {
   proposals: ProposalRecord[];
   invoices: InvoiceRecord[];
   targets: TargetRecord[];
+  knowledge?: KnowledgeBaseRecord[];
 }
 
 export interface ApiSuccess<T> {
@@ -222,3 +223,13 @@ export interface ApiError {
 }
 
 export type ApiResponse<T> = ApiSuccess<T> | ApiError;
+
+export interface KnowledgeBaseRecord {
+  id: string;
+  title: string;
+  category: "objection" | "case_study" | "pricing" | "usp" | "other";
+  content: string;
+  tags?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+}
