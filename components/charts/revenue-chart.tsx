@@ -58,7 +58,7 @@ export function RevenueChart({
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: "#7A7A7A", fontSize: 12 }}
-                tickFormatter={(value) => `$${Math.round(value / 1000)}k`}
+                tickFormatter={(value) => `₹${Math.round(value / 1000)}k`}
               />
               <Tooltip
                 formatter={(value: number) => formatCurrency(value)}

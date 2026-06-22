@@ -32,7 +32,11 @@ export async function PATCH(
     await requireApiUser(request, ["admin"]);
     const payload = await validateRequest(request, employeeSchema.partial());
     const { id } = await params;
-    const employee = await updateEmployee(id, payload);
+    const employee = await updateEmployee(id, {
+      ...payload,
+      loginRole: payload.loginRole ? (payload.loginRole as any) : undefined,
+      password: payload.password ? payload.password : undefined,
+    });
     return employee ? apiSuccess(employee) : apiError("Employee not found", 404);
   } catch (error) {
     return handleApiException(error);

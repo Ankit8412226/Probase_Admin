@@ -31,6 +31,8 @@ export interface EmployeeRecord {
   joiningDate: string;
   createdAt?: string;
   updatedAt?: string;
+  loginRole?: UserRole;
+  password?: string;
 }
 
 export interface SalaryRecord {

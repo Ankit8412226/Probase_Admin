@@ -20,7 +20,15 @@ export async function POST(request: NextRequest) {
   try {
     await requireApiUser(request, ["admin"]);
     const payload = await validateRequest(request, employeeSchema);
-    const employee = await createEmployee(payload);
+    const employee = await createEmployee({
+      name: payload.name,
+      email: payload.email,
+      role: payload.role,
+      salary: payload.salary,
+      joiningDate: payload.joiningDate,
+      loginRole: payload.loginRole ? (payload.loginRole as any) : undefined,
+      password: payload.password ? payload.password : undefined,
+    });
     return apiSuccess(employee, { status: 201 });
   } catch (error) {
     return handleApiException(error);

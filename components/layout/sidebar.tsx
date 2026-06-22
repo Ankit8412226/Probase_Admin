@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
 
 const navigation = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -46,7 +47,15 @@ export function Sidebar({
   onMobileToggle: () => void;
 }) {
   const pathname = usePathname();
-
+  const { user } = useAuth();
+ 
+  const filteredNavigation = navigation.filter((item) => {
+    if (user?.role === "business") {
+      return item.href !== "/dashboard/employees" && item.href !== "/dashboard/salaries";
+    }
+    return true;
+  });
+ 
   return (
     <>
       <button
@@ -87,11 +96,11 @@ export function Sidebar({
           </button>
         </div>
         <nav className="mt-8 flex-1 space-y-2">
-          {navigation.map((item) => {
+          {filteredNavigation.map((item) => {
             const Icon = item.icon;
             const active =
               pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
-
+ 
             return (
               <Link
                 key={item.href}

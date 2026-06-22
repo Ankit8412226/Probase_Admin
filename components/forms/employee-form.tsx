@@ -1,26 +1,29 @@
 "use client";
-
+ 
 import { useEffect, useState } from "react";
-
+ 
 import { Button } from "@/components/ui/button";
 import {
   FieldGroup,
   FieldLabel,
   FormGrid,
+  SelectInput,
   TextInput,
 } from "@/components/forms/form-primitives";
-import type { EmployeeRecord } from "@/types";
-
+import type { EmployeeRecord, UserRole } from "@/types";
+ 
 type EmployeePayload = Omit<EmployeeRecord, "id" | "createdAt" | "updatedAt">;
-
+ 
 const defaultValues: EmployeePayload = {
   name: "",
   email: "",
   role: "",
   salary: 0,
   joiningDate: "",
+  loginRole: "" as any,
+  password: "",
 };
-
+ 
 export function EmployeeForm({
   initialValues,
   onSubmit,
@@ -33,7 +36,7 @@ export function EmployeeForm({
   isSubmitting: boolean;
 }) {
   const [values, setValues] = useState<EmployeePayload>(defaultValues);
-
+ 
   useEffect(() => {
     if (initialValues) {
       setValues({
@@ -42,19 +45,27 @@ export function EmployeeForm({
         role: initialValues.role,
         salary: initialValues.salary,
         joiningDate: initialValues.joiningDate,
+        loginRole: initialValues.loginRole ?? ("" as any),
+        password: "",
       });
       return;
     }
-
+ 
     setValues(defaultValues);
   }, [initialValues]);
-
+ 
   return (
     <form
       className="space-y-5"
       onSubmit={async (event) => {
         event.preventDefault();
-        await onSubmit(values);
+        // Clean up empty loginRole before submission
+        const submitValues = {
+          ...values,
+          loginRole: values.loginRole || undefined,
+          password: values.password || undefined,
+        };
+        await onSubmit(submitValues);
       }}
     >
       <FormGrid>
@@ -117,6 +128,44 @@ export function EmployeeForm({
           required
         />
       </FieldGroup>
+ 
+      <div className="border-t border-line pt-4 my-2">
+        <h4 className="text-sm font-semibold text-black mb-3">System Login Credentials</h4>
+        <FormGrid>
+          <FieldGroup>
+            <FieldLabel htmlFor="employee-login-role">System Role</FieldLabel>
+            <SelectInput
+              id="employee-login-role"
+              value={values.loginRole ?? ""}
+              onChange={(event) =>
+                setValues((current) => ({
+                  ...current,
+                  loginRole: event.target.value as UserRole || undefined,
+                }))
+              }
+            >
+              <option value="">No system login access</option>
+              <option value="business">Business User</option>
+              <option value="manager">Manager</option>
+              <option value="admin">Administrator</option>
+            </SelectInput>
+          </FieldGroup>
+          <FieldGroup>
+            <FieldLabel htmlFor="employee-password">Password</FieldLabel>
+            <TextInput
+              id="employee-password"
+              type="password"
+              value={values.password ?? ""}
+              onChange={(event) =>
+                setValues((current) => ({ ...current, password: event.target.value }))
+              }
+              placeholder={initialValues ? "Leave blank to keep existing" : "Min 8 characters"}
+              required={!initialValues && Boolean(values.loginRole)}
+            />
+          </FieldGroup>
+        </FormGrid>
+      </div>
+ 
       <div className="flex justify-end gap-3">
         <Button type="button" variant="secondary" onClick={onCancel}>
           Cancel
