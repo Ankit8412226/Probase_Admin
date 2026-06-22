@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { BookOpen, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { BookOpen, Bot, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { SalesCopilotSidebar } from "@/components/modules/sales-copilot-sidebar";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -37,6 +38,7 @@ export function KnowledgeBaseModule({
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [editingArticle, setEditingArticle] = useState<KnowledgeBaseRecord | null>(null);
+  const [isCopilotOpen, setIsCopilotOpen] = useState(false);
 
   const [formValues, setFormValues] = useState<Omit<KnowledgeBaseRecord, "id" | "createdAt" | "updatedAt">>({
     title: "",
@@ -106,6 +108,7 @@ export function KnowledgeBaseModule({
     case_study: "bg-green-50 text-green-700 border-green-200",
     pricing: "bg-blue-50 text-blue-700 border-blue-200",
     usp: "bg-purple-50 text-purple-700 border-purple-200",
+    brochure: "bg-amber-50 text-amber-700 border-amber-200",
     other: "bg-gray-50 text-gray-700 border-gray-200",
   };
 
@@ -114,6 +117,7 @@ export function KnowledgeBaseModule({
     case_study: "Case Study",
     pricing: "Pricing Standard",
     usp: "Unique Selling Proposition",
+    brochure: "Company Brochure / Doc",
     other: "General Playbook",
   };
 
@@ -124,12 +128,18 @@ export function KnowledgeBaseModule({
         title="Sales knowledge playbooks"
         description="Write and maintain case studies, objection playbooks, standard contract templates, and pricing calculators utilized by the Sales Co-Pilot."
         actions={
-          canManage ? (
-            <Button onClick={openCreateModal}>
-              <Plus size={16} />
-              Add Playbook Article
+          <div className="flex items-center gap-3">
+            <Button variant="secondary" onClick={() => setIsCopilotOpen(true)}>
+              <Bot size={16} />
+              Ask Sales Co-Pilot
             </Button>
-          ) : null
+            {canManage ? (
+              <Button onClick={openCreateModal}>
+                <Plus size={16} />
+                Add Playbook Article
+              </Button>
+            ) : null}
+          </div>
         }
       />
 
@@ -154,6 +164,7 @@ export function KnowledgeBaseModule({
           <option value="case_study">Case Studies</option>
           <option value="pricing">Pricing Standards</option>
           <option value="usp">Unique Selling Propositions</option>
+          <option value="brochure">Company Brochures</option>
           <option value="other">Other Playbooks</option>
         </SelectInput>
       </Card>
@@ -239,6 +250,7 @@ export function KnowledgeBaseModule({
                 <option value="case_study">Case Study</option>
                 <option value="pricing">Pricing Standard</option>
                 <option value="usp">Unique Selling Proposition</option>
+                <option value="brochure">Company Brochure / Doc</option>
                 <option value="other">Other Playbook</option>
               </SelectInput>
             </FieldGroup>
@@ -274,6 +286,11 @@ export function KnowledgeBaseModule({
           </div>
         </form>
       </Modal>
+      <SalesCopilotSidebar
+        lead={null}
+        open={isCopilotOpen}
+        onClose={() => setIsCopilotOpen(false)}
+      />
     </div>
   );
 }

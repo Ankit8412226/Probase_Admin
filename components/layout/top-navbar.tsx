@@ -1,28 +1,31 @@
 "use client";
 
-import { Bell, LogOut, Search, ShieldCheck } from "lucide-react";
+import { useState } from "react";
+import { Bell, Bot, LogOut, Search, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import { SalesCopilotSidebar } from "@/components/modules/sales-copilot-sidebar";
 
 export function TopNavbar() {
   const router = useRouter();
   const { user, setUser } = useAuth();
+  const [isCopilotOpen, setIsCopilotOpen] = useState(false);
   const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
-
+ 
   async function handleLogout() {
     if (isDemoMode) {
       router.refresh();
       return;
     }
-
+ 
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
     router.push("/login");
     router.refresh();
   }
-
+ 
   return (
     <div className="sticky top-0 z-10 flex flex-col gap-4 border-b border-line bg-white/85 px-5 py-4 backdrop-blur md:flex-row md:items-center md:justify-between">
       <div className="flex items-center gap-3 rounded-[16px] border border-line bg-mist px-4 py-3">
@@ -30,6 +33,15 @@ export function TopNavbar() {
         <span className="text-sm text-fog">Search employees, projects, leads...</span>
       </div>
       <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => setIsCopilotOpen(true)}
+          title="Open Sales Co-Pilot"
+          className="subtle-ring inline-flex h-11 px-4 items-center justify-center gap-2 rounded-full border border-line bg-white text-sm font-semibold text-black transition hover:bg-mist"
+        >
+          <Bot size={16} className="text-black" />
+          <span>Sales Co-Pilot</span>
+        </button>
         <button
           type="button"
           className="subtle-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-white text-fog transition hover:bg-mist hover:text-black"
@@ -62,6 +74,12 @@ export function TopNavbar() {
           )}
         </div>
       </div>
+ 
+      <SalesCopilotSidebar
+        lead={null}
+        open={isCopilotOpen}
+        onClose={() => setIsCopilotOpen(false)}
+      />
     </div>
   );
 }

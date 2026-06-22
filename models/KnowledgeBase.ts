@@ -4,7 +4,7 @@ const knowledgeBaseSchema = new Schema(
   {
     _id: { type: String, required: true },
     title: { type: String, required: true, trim: true },
-    category: { type: String, enum: ["objection", "case_study", "pricing", "usp", "other"], required: true },
+    category: { type: String, enum: ["objection", "case_study", "pricing", "usp", "brochure", "other"], required: true },
     content: { type: String, required: true },
     tags: [{ type: String, trim: true }]
   },

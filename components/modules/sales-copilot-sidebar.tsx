@@ -33,28 +33,36 @@ export function SalesCopilotSidebar({
   const [relevantPlaybooks, setRelevantPlaybooks] = useState<PlaybookInfo[]>([]);
   const feedRef = useRef<HTMLDivElement>(null);
 
-  // Clear chat when lead changes
+  // Clear/Reset chat when opened or lead changes
   useEffect(() => {
-    if (lead) {
-      setMessages([
-        {
-          role: "model",
-          text: `👋 Hello! I am your Sales Co-Pilot. I've loaded the details for **${lead.name}** (value: ₹${lead.value.toLocaleString("en-IN")}). How can I help you pitch or handle objections today?`,
-        },
-      ]);
+    if (open) {
+      if (lead) {
+        setMessages([
+          {
+            role: "model",
+            text: `👋 Hello! I am your Sales Co-Pilot. I've loaded the details for **${lead.name}** (value: ₹${lead.value.toLocaleString("en-IN")}). How can I help you pitch or handle objections today?`,
+          },
+        ]);
+      } else {
+        setMessages([
+          {
+            role: "model",
+            text: `👋 Hello! I am your Sales Co-Pilot. Ask me any question about Probase's services, playbooks, case studies, or standard pricing and I will answer you using our Knowledge Base!`,
+          },
+        ]);
+      }
       setRelevantPlaybooks([]);
     }
-  }, [lead]);
-
+  }, [lead, open]);
+ 
   // Scroll to bottom on new messages
   useEffect(() => {
     feedRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
-  if (!open || !lead) return null;
-
+ 
+  if (!open) return null;
+ 
   async function handleSendMessage(text: string) {
-    if (!lead) return;
     if (!text.trim() || loading) return;
 
     const userMessage: Message = { role: "user", text };
@@ -67,7 +75,7 @@ export function SalesCopilotSidebar({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          leadId: lead.id,
+          leadId: lead?.id,
           message: text,
           chatHistory: messages.map((m) => ({ role: m.role, text: m.text })),
         }),
@@ -133,18 +141,29 @@ export function SalesCopilotSidebar({
         </div>
 
         {/* Lead Context Quick Summary */}
-        <div className="border-b border-line bg-mist/30 px-5 py-3 text-xs">
-          <p className="font-semibold text-black">Context Lead: {lead.name}</p>
-          <p className="mt-1 text-fog">
-            Value: <span className="text-black font-medium">₹{lead.value.toLocaleString("en-IN")}</span> • 
-            Stage: <span className="text-black font-medium">{lead.stage}</span>
-          </p>
-          {lead.notes && (
-            <p className="mt-2 line-clamp-2 rounded bg-white p-2 border border-line italic text-fog">
-              "{lead.notes}"
+        {lead ? (
+          <div className="border-b border-line bg-mist/30 px-5 py-3 text-xs">
+            <p className="font-semibold text-black">Context Lead: {lead.name}</p>
+            <p className="mt-1 text-fog">
+              Value: <span className="text-black font-medium">₹{lead.value.toLocaleString("en-IN")}</span> • 
+              Stage: <span className="text-black font-medium">{lead.stage}</span>
             </p>
-          )}
-        </div>
+            {lead.notes && (
+              <p className="mt-2 line-clamp-2 rounded bg-white p-2 border border-line italic text-fog">
+                "{lead.notes}"
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="border-b border-line bg-mist/30 px-5 py-3 text-xs">
+            <p className="font-semibold text-black flex items-center gap-1">
+              ✨ General Strategist Mode
+            </p>
+            <p className="mt-1 text-fog">
+              Direct access to Probase playbooks, case studies, brochures, and objection guidelines.
+            </p>
+          </div>
+        )}
 
         {/* Messages Feed */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-white">

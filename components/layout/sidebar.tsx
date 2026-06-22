@@ -97,7 +97,7 @@ export function Sidebar({
             <ChevronLeft className={cn("transition", collapsed && "rotate-180")} size={16} />
           </button>
         </div>
-        <nav className="mt-8 flex-1 space-y-2">
+        <nav className="mt-8 flex-1 space-y-2 overflow-y-auto pr-1">
           {filteredNavigation.map((item) => {
             const Icon = item.icon;
             const active =

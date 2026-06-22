@@ -227,7 +227,7 @@ export type ApiResponse<T> = ApiSuccess<T> | ApiError;
 export interface KnowledgeBaseRecord {
   id: string;
   title: string;
-  category: "objection" | "case_study" | "pricing" | "usp" | "other";
+  category: "objection" | "case_study" | "pricing" | "usp" | "brochure" | "other";
   content: string;
   tags?: string[];
   createdAt?: string;

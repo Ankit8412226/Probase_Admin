@@ -100,7 +100,7 @@ export const targetSchema = z.object({
 
 export const knowledgeSchema = z.object({
   title: z.string().min(3),
-  category: z.enum(["objection", "case_study", "pricing", "usp", "other"]),
+  category: z.enum(["objection", "case_study", "pricing", "usp", "brochure", "other"]),
   content: z.string().min(10),
   tags: z.array(z.string()).optional().default([]),
 });
