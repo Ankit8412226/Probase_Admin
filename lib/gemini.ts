@@ -1,10 +1,10 @@
 export async function generateWithGemini(prompt: string, systemInstruction?: string) {
-  const apiKey = 'AIzaSyBGUdxdknyUyJMh-B7QTPA75XJz2CkPv6Y';
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY is not defined in environment variables.");
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
 
   const body: any = {
     contents: [
