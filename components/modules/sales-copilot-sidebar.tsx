@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Bot, MessageSquare, Send, Sparkles, X } from "lucide-react";
+import { Bot, MessageSquare, Send, Sparkles, X, Activity, DollarSign, HelpCircle, ShieldAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { TextInput } from "@/components/forms/form-primitives";
@@ -18,6 +18,20 @@ interface PlaybookInfo {
   category: string;
 }
 
+interface AnalysisData {
+  dealScore: number;
+  swot: {
+    strengths: string[];
+    weaknesses: string[];
+    opportunities: string[];
+    threats: string[];
+  };
+  objectionCounters: string[];
+  milestonePayments: string[];
+  nextActions: string[];
+  recommendedQuestions: string[];
+}
+
 export function SalesCopilotSidebar({
   lead,
   open,
@@ -27,15 +41,26 @@ export function SalesCopilotSidebar({
   open: boolean;
   onClose: () => void;
 }) {
+  const [activeTab, setActiveTab] = useState<"chat" | "analysis">("chat");
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [relevantPlaybooks, setRelevantPlaybooks] = useState<PlaybookInfo[]>([]);
+  
+  // Analysis States
+  const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState("");
+
   const feedRef = useRef<HTMLDivElement>(null);
 
-  // Clear/Reset chat when opened or lead changes
+  // Reset chat and analysis when lead changes or sidebar opens
   useEffect(() => {
     if (open) {
+      setActiveTab("chat");
+      setAnalysis(null);
+      setAnalysisError("");
+      
       if (lead) {
         setMessages([
           {
@@ -54,14 +79,40 @@ export function SalesCopilotSidebar({
       setRelevantPlaybooks([]);
     }
   }, [lead, open]);
- 
+
   // Scroll to bottom on new messages
   useEffect(() => {
     feedRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
- 
+
+  // Fetch Strategy Analysis
+  async function fetchLeadAnalysis() {
+    if (!lead || analysis || analyzing) return;
+    setAnalyzing(true);
+    setAnalysisError("");
+    try {
+      const response = await fetch(`/api/leads/${lead.id}/analyze`);
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Failed to analyze lead");
+      }
+      setAnalysis(data.data);
+    } catch (err: any) {
+      setAnalysisError(err.message || "Something went wrong generating the analysis.");
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
+  // Fetch analysis when switching tabs
+  useEffect(() => {
+    if (activeTab === "analysis" && lead) {
+      fetchLeadAnalysis();
+    }
+  }, [activeTab, lead]);
+
   if (!open) return null;
- 
+
   async function handleSendMessage(text: string) {
     if (!text.trim() || loading) return;
 
@@ -140,6 +191,32 @@ export function SalesCopilotSidebar({
           </button>
         </div>
 
+        {/* Tab Selector */}
+        {lead && (
+          <div className="flex border-b border-line bg-mist/50 p-1">
+            <button
+              onClick={() => setActiveTab("chat")}
+              className={`flex-1 py-2 text-center text-xs font-semibold rounded-[8px] transition-all ${
+                activeTab === "chat"
+                  ? "bg-white text-black shadow-sm"
+                  : "text-fog hover:text-black"
+              }`}
+            >
+              💬 Co-Pilot Chat
+            </button>
+            <button
+              onClick={() => setActiveTab("analysis")}
+              className={`flex-1 py-2 text-center text-xs font-semibold rounded-[8px] transition-all flex items-center justify-center gap-1.5 ${
+                activeTab === "analysis"
+                  ? "bg-white text-black shadow-sm"
+                  : "text-fog hover:text-black"
+              }`}
+            >
+              📊 Strategy Analysis
+            </button>
+          </div>
+        )}
+
         {/* Lead Context Quick Summary */}
         {lead ? (
           <div className="border-b border-line bg-mist/30 px-5 py-3 text-xs">
@@ -148,11 +225,6 @@ export function SalesCopilotSidebar({
               Value: <span className="text-black font-medium">₹{lead.value.toLocaleString("en-IN")}</span> • 
               Stage: <span className="text-black font-medium">{lead.stage}</span>
             </p>
-            {lead.notes && (
-              <p className="mt-2 line-clamp-2 rounded bg-white p-2 border border-line italic text-fog">
-                "{lead.notes}"
-              </p>
-            )}
           </div>
         ) : (
           <div className="border-b border-line bg-mist/30 px-5 py-3 text-xs">
@@ -165,97 +237,235 @@ export function SalesCopilotSidebar({
           </div>
         )}
 
-        {/* Messages Feed */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-white">
-          {messages.map((msg, index) => (
-            <div
-              key={index}
-              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-            >
-              <div
-                className={`max-w-[85%] rounded-[16px] p-4 text-sm leading-relaxed shadow-sm ${
-                  msg.role === "user"
-                    ? "rounded-tr-[4px] bg-black text-white"
-                    : "rounded-tl-[4px] bg-mist text-gray-800 border border-line"
-                }`}
-              >
-                <div className="flex items-center gap-1.5 mb-1 text-[10px] uppercase tracking-wider text-fog">
-                  {msg.role === "user" ? "You (Sales Rep)" : "AI Co-Pilot"}
-                </div>
-                <div className="whitespace-pre-wrap">{msg.text}</div>
-              </div>
-            </div>
-          ))}
-          {loading && (
-            <div className="flex justify-start">
-              <div className="max-w-[85%] rounded-[16px] rounded-tl-[4px] bg-mist p-4 text-sm border border-line shadow-sm">
-                <div className="flex items-center gap-2 text-fog">
-                  <div className="h-2 w-2 animate-bounce rounded-full bg-fog" style={{ animationDelay: "0ms" }} />
-                  <div className="h-2 w-2 animate-bounce rounded-full bg-fog" style={{ animationDelay: "150ms" }} />
-                  <div className="h-2 w-2 animate-bounce rounded-full bg-fog" style={{ animationDelay: "300ms" }} />
-                  <span>Strategizing...</span>
-                </div>
-              </div>
-            </div>
-          )}
-          <div ref={feedRef} />
-        </div>
-
-        {/* Playbook references (RAG indicator) */}
-        {relevantPlaybooks.length > 0 && (
-          <div className="border-t border-line bg-mist/20 px-5 py-2.5">
-            <p className="text-[10px] font-mono uppercase tracking-wider text-fog flex items-center gap-1">
-              <Sparkles size={10} /> Consulted Playbook Articles:
-            </p>
-            <div className="mt-1 flex flex-wrap gap-1.5">
-              {relevantPlaybooks.map((p) => (
-                <span
-                  key={p.id}
-                  className="rounded bg-white border border-line px-2 py-0.5 text-[10px] font-medium text-black"
+        {activeTab === "chat" ? (
+          <>
+            {/* Messages Feed */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-white">
+              {messages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                 >
-                  📖 {p.title}
-                </span>
+                  <div
+                    className={`max-w-[85%] rounded-[16px] p-4 text-sm leading-relaxed shadow-sm ${
+                      msg.role === "user"
+                        ? "rounded-tr-[4px] bg-black text-white"
+                        : "rounded-tl-[4px] bg-mist text-gray-800 border border-line"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 mb-1 text-[10px] uppercase tracking-wider text-fog">
+                      {msg.role === "user" ? "You (Sales Rep)" : "AI Co-Pilot"}
+                    </div>
+                    <div className="whitespace-pre-wrap">{msg.text}</div>
+                  </div>
+                </div>
               ))}
+              {loading && (
+                <div className="flex justify-start">
+                  <div className="max-w-[85%] rounded-[16px] rounded-tl-[4px] bg-mist p-4 text-sm border border-line shadow-sm">
+                    <div className="flex items-center gap-2 text-fog">
+                      <div className="h-2 w-2 animate-bounce rounded-full bg-fog" style={{ animationDelay: "0ms" }} />
+                      <div className="h-2 w-2 animate-bounce rounded-full bg-fog" style={{ animationDelay: "150ms" }} />
+                      <div className="h-2 w-2 animate-bounce rounded-full bg-fog" style={{ animationDelay: "300ms" }} />
+                      <span>Strategizing...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div ref={feedRef} />
             </div>
+
+            {/* Playbook references (RAG indicator) */}
+            {relevantPlaybooks.length > 0 && (
+              <div className="border-t border-line bg-mist/20 px-5 py-2.5">
+                <p className="text-[10px] font-mono uppercase tracking-wider text-fog flex items-center gap-1">
+                  <Sparkles size={10} /> Consulted Playbook Articles:
+                </p>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {relevantPlaybooks.map((p) => (
+                    <span
+                      key={p.id}
+                      className="rounded bg-white border border-line px-2 py-0.5 text-[10px] font-medium text-black"
+                    >
+                      📖 {p.title}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Preset Chips */}
+            <div className="border-t border-line px-5 py-3 bg-mist/10 space-y-2">
+              <p className="text-[11px] font-medium text-fog">Objection Handlers & Prompts:</p>
+              <div className="flex flex-wrap gap-2">
+                {presetChips.map((chip, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => handleSendMessage(chip.prompt)}
+                    disabled={loading}
+                    className="rounded-full border border-line bg-white px-3 py-1.5 text-xs text-black font-medium shadow-sm transition hover:bg-black hover:text-white disabled:opacity-50"
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Input Bar */}
+            <div className="border-t border-line p-4 bg-white flex items-center gap-2">
+              <TextInput
+                placeholder="Ask Co-Pilot for sales advice..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSendMessage(input)}
+                disabled={loading}
+                className="flex-1"
+              />
+              <Button
+                onClick={() => handleSendMessage(input)}
+                disabled={loading || !input.trim()}
+                className="h-11 px-4"
+              >
+                <Send size={16} />
+              </Button>
+            </div>
+          </>
+        ) : (
+          /* Strategy Analysis Panel */
+          <div className="flex-1 overflow-y-auto p-5 space-y-6 bg-mist/10">
+            {analyzing ? (
+              <div className="flex flex-col items-center justify-center py-20 space-y-3">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-black border-t-transparent" />
+                <p className="text-sm font-semibold text-black">Analyzing lead details...</p>
+                <p className="text-xs text-fog">Generating custom SWOT and payment structures</p>
+              </div>
+            ) : analysisError ? (
+              <div className="rounded-[16px] border border-red-200 bg-red-50/50 p-4 text-center space-y-2">
+                <ShieldAlert className="mx-auto text-red-500" size={24} />
+                <p className="text-sm font-semibold text-red-700">Failed to analyze lead</p>
+                <p className="text-xs text-red-600">{analysisError}</p>
+                <Button variant="secondary" className="h-8 text-xs mt-2" onClick={() => { setAnalysis(null); fetchLeadAnalysis(); }}>
+                  Retry Analysis
+                </Button>
+              </div>
+            ) : analysis ? (
+              <>
+                {/* Deal Score */}
+                <div className="flex items-center gap-4 bg-white p-4 rounded-[16px] border border-line shadow-sm">
+                  <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-black text-white font-bold text-base">
+                    {analysis.dealScore}%
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-sm text-black">Deal Qualification Score</h4>
+                    <p className="text-[11px] text-fog">AI assessment of lead readiness and close probability</p>
+                  </div>
+                </div>
+
+                {/* SWOT Analysis */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-fog flex items-center gap-1.5">
+                    <Activity size={12} /> SWOT Analysis
+                  </h4>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className="bg-emerald-50/30 border border-emerald-100 p-3 rounded-[12px]">
+                      <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Strengths</span>
+                      <ul className="mt-1.5 list-disc pl-3 text-[11px] text-gray-700 space-y-1">
+                        {analysis.swot.strengths.map((s, i) => <li key={i}>{s}</li>)}
+                      </ul>
+                    </div>
+                    <div className="bg-amber-50/30 border border-amber-100 p-3 rounded-[12px]">
+                      <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider">Weaknesses</span>
+                      <ul className="mt-1.5 list-disc pl-3 text-[11px] text-gray-700 space-y-1">
+                        {analysis.swot.weaknesses.map((s, i) => <li key={i}>{s}</li>)}
+                      </ul>
+                    </div>
+                    <div className="bg-blue-50/30 border border-blue-100 p-3 rounded-[12px]">
+                      <span className="text-[10px] font-bold text-blue-800 uppercase tracking-wider">Opportunities</span>
+                      <ul className="mt-1.5 list-disc pl-3 text-[11px] text-gray-700 space-y-1">
+                        {analysis.swot.opportunities.map((s, i) => <li key={i}>{s}</li>)}
+                      </ul>
+                    </div>
+                    <div className="bg-rose-50/30 border border-rose-100 p-3 rounded-[12px]">
+                      <span className="text-[10px] font-bold text-rose-800 uppercase tracking-wider">Threats</span>
+                      <ul className="mt-1.5 list-disc pl-3 text-[11px] text-gray-700 space-y-1">
+                        {analysis.swot.threats.map((s, i) => <li key={i}>{s}</li>)}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Recommended Milestone / Part Payments */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-fog flex items-center gap-1.5">
+                    <DollarSign size={12} /> Milestone Payment Strategies
+                  </h4>
+                  <div className="space-y-2">
+                    {analysis.milestonePayments.map((p, i) => (
+                      <div key={i} className="bg-white border border-line p-3 rounded-[12px] shadow-sm flex items-start gap-2">
+                        <span className="bg-black text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
+                          {i + 1}
+                        </span>
+                        <p className="text-xs text-gray-800 font-medium">{p}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Recommended Client Questions */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-fog flex items-center gap-1.5">
+                    <HelpCircle size={12} /> Strategic Questions to Ask
+                  </h4>
+                  <div className="space-y-2">
+                    {analysis.recommendedQuestions.map((q, i) => (
+                      <div key={i} className="bg-white border border-line p-3 rounded-[12px] shadow-sm flex flex-col justify-between gap-2.5">
+                        <p className="text-xs text-gray-700 italic">"{q}"</p>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(q);
+                            alert("Copied to clipboard!");
+                          }}
+                          className="self-end text-[10px] text-black font-semibold hover:underline"
+                        >
+                          📋 Copy Question
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Objection Counters & Playbook Strategy */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-fog flex items-center gap-1.5">
+                    <Sparkles size={12} /> Objection Counter-Strategies
+                  </h4>
+                  <div className="bg-white border border-line p-4 rounded-[16px] shadow-sm space-y-3">
+                    {analysis.objectionCounters.map((obj, i) => (
+                      <div key={i} className="text-xs text-gray-700 leading-relaxed border-b border-line last:border-b-0 pb-2.5 last:pb-0">
+                        <span className="font-semibold text-black block mb-0.5">Strategy {i + 1}:</span>
+                        {obj}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Next Steps */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-fog">🎯 Recommended Next Actions</h4>
+                  <div className="bg-black text-white p-4 rounded-[16px] shadow-sm space-y-2">
+                    {analysis.nextActions.map((act, i) => (
+                      <div key={i} className="flex items-start gap-2 text-xs text-white/90">
+                        <span className="text-white/60 font-mono font-bold mt-0.5">{i + 1}.</span>
+                        <p>{act}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            ) : null}
           </div>
         )}
-
-        {/* Preset Chips */}
-        <div className="border-t border-line px-5 py-3 bg-mist/10 space-y-2">
-          <p className="text-[11px] font-medium text-fog">Objection Handlers & Prompts:</p>
-          <div className="flex flex-wrap gap-2">
-            {presetChips.map((chip, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => handleSendMessage(chip.prompt)}
-                disabled={loading}
-                className="rounded-full border border-line bg-white px-3 py-1.5 text-xs text-black font-medium shadow-sm transition hover:bg-black hover:text-white disabled:opacity-50"
-              >
-                {chip.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Input Bar */}
-        <div className="border-t border-line p-4 bg-white flex items-center gap-2">
-          <TextInput
-            placeholder="Ask Co-Pilot for sales advice..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSendMessage(input)}
-            disabled={loading}
-            className="flex-1"
-          />
-          <Button
-            onClick={() => handleSendMessage(input)}
-            disabled={loading || !input.trim()}
-            className="h-11 px-4"
-          >
-            <Send size={16} />
-          </Button>
-        </div>
       </aside>
     </>
   );
