@@ -34,22 +34,32 @@ export async function markAttendance(
     const shifts = await getShifts();
     const userShift = shifts.find((s) => s.assignedEmployeeIds.includes(userId));
     
+    // Get check-in time converted to Indian Standard Time (IST)
+    const istDate = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+    const hours = istDate.getHours();
+    const minutes = istDate.getMinutes();
+
     if (userShift) {
       const [shours, sminutes] = userShift.startTime.split(":").map(Number);
-      // Late threshold: 15 minutes after shift start time
+      // Late threshold: exactly 15 minutes after shift start time
       const shiftStartTimeLimit = shours * 60 + sminutes + 15;
-      const currentMinutesToday = now.getHours() * 60 + now.getMinutes();
+      const currentMinutesToday = hours * 60 + minutes;
       status = currentMinutesToday > shiftStartTimeLimit ? "Late" : "Present";
     } else {
-      // Default fallback: Late if after 10:00 AM
+      // Default fallback: Late if after 10:00 AM local time
+      status = hours > 10 || (hours === 10 && minutes > 0) ? "Late" : "Present";
+    }
+  } catch (err) {
+    try {
+      const istDate = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+      const hours = istDate.getHours();
+      const minutes = istDate.getMinutes();
+      status = hours > 10 || (hours === 10 && minutes > 0) ? "Late" : "Present";
+    } catch {
       const hours = now.getHours();
       const minutes = now.getMinutes();
       status = hours > 10 || (hours === 10 && minutes > 0) ? "Late" : "Present";
     }
-  } catch (err) {
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    status = hours > 10 || (hours === 10 && minutes > 0) ? "Late" : "Present";
   }
 
   // Check if already checked in today
