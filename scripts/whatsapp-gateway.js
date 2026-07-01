@@ -1,53 +1,57 @@
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require("@whiskeysockets/baileys");
 const express = require("express");
-const { Client, LocalAuth } = require("whatsapp-web.js");
-const qrcode = require("qrcode-terminal");
 const cors = require("cors");
+const qrcode = require("qrcode-terminal");
+const pino = require("pino");
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
+let sock = null;
 let qrCodeData = "";
 let connectionStatus = "DISCONNECTED";
 
-console.log("Starting WhatsApp Web Client session...");
+console.log("Starting WhatsApp Baileys Client session...");
 
-const client = new Client({
-  authStrategy: new LocalAuth(),
-  puppeteer: {
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  },
-});
+async function connectToWhatsApp() {
+  const { state, saveCreds } = await useMultiFileAuthState(".wa_auth");
 
-client.on("qr", (qr) => {
-  qrCodeData = qr;
-  connectionStatus = "QR";
-  console.log("\n--- WhatsApp QR Code (Scan with your phone) ---");
-  qrcode.generate(qr, { small: true });
-});
+  sock = makeWASocket({
+    auth: state,
+    logger: pino({ level: "silent" }),
+    printQRInTerminal: false,
+  });
 
-client.on("ready", () => {
-  connectionStatus = "CONNECTED";
-  qrCodeData = "";
-  console.log("\n==============================================");
-  console.log("WhatsApp Client is authenticated and READY!");
-  console.log("==============================================\n");
-});
+  sock.ev.on("creds.update", saveCreds);
 
-client.on("authenticated", () => {
-  console.log("Session authenticated successfully.");
-});
+  sock.ev.on("connection.update", (update) => {
+    const { connection, lastDisconnect, qr } = update;
 
-client.on("auth_failure", (msg) => {
-  console.error("Session authentication failed:", msg);
-});
+    if (qr) {
+      qrCodeData = qr;
+      connectionStatus = "QR";
+      console.log("\n--- WhatsApp QR Code (Scan with your phone) ---");
+      qrcode.generate(qr, { small: true });
+    }
 
-client.on("disconnected", (reason) => {
-  console.log("WhatsApp client disconnected:", reason);
-  connectionStatus = "DISCONNECTED";
-  qrCodeData = "";
-});
+    if (connection === "close") {
+      const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+      console.log("Connection closed, reconnecting:", shouldReconnect);
+      connectionStatus = "DISCONNECTED";
+      qrCodeData = "";
+      if (shouldReconnect) {
+        connectToWhatsApp().catch(err => console.error(err));
+      }
+    } else if (connection === "open") {
+      console.log("\n==============================================");
+      console.log("WhatsApp Client is authenticated and READY!");
+      console.log("==============================================\n");
+      connectionStatus = "CONNECTED";
+      qrCodeData = "";
+    }
+  });
+}
 
 app.get("/qr", (req, res) => {
   if (connectionStatus === "QR" && qrCodeData) {
@@ -69,16 +73,15 @@ app.post("/send", async (req, res) => {
     return res.status(400).json({ error: "Missing to or message" });
   }
 
-  if (connectionStatus !== "CONNECTED") {
+  if (connectionStatus !== "CONNECTED" || !sock) {
     return res.status(503).json({ error: "WhatsApp gateway client is not authenticated yet." });
   }
 
   try {
-    // Format phone to WhatsApp standard format: e.g. "+91 99999-99999" -> "919999999999@c.us"
     const cleanedPhone = to.replace(/[^0-9]/g, "");
-    const formattedPhone = `${cleanedPhone}@c.us`;
+    const formattedPhone = `${cleanedPhone}@s.whatsapp.net`;
 
-    await client.sendMessage(formattedPhone, message);
+    await sock.sendMessage(formattedPhone, { text: message });
     console.log(`[Sent Alert to ${to}]: ${message.replace(/\n/g, " ")}`);
     res.json({ success: true });
   } catch (err) {
@@ -87,10 +90,11 @@ app.post("/send", async (req, res) => {
   }
 });
 
-client.initialize();
+// Start connecting
+connectToWhatsApp().catch(err => console.error("Initialization failed:", err));
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`WhatsApp Gateway Server running on http://localhost:${PORT}`);
+  console.log(`WhatsApp Gateway Server running on port ${PORT}`);
   console.log("Link this in your dashboard settings!");
 });

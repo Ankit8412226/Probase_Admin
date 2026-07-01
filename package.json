@@ -10,6 +10,7 @@
     "whatsapp": "node scripts/whatsapp-gateway.js"
   },
   "dependencies": {
+    "@whiskeysockets/baileys": "^7.0.0-rc13",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
     "cors": "^2.8.6",
@@ -20,6 +21,8 @@
     "lucide-react": "^0.468.0",
     "mongoose": "^8.9.2",
     "next": "latest",
+    "pino": "^10.3.1",
+    "qrcode": "^1.5.4",
     "qrcode-terminal": "^0.12.0",
     "react": "latest",
     "react-dom": "latest",
