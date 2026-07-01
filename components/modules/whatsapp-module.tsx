@@ -244,14 +244,20 @@ export function WhatsappModule({
                 <Button
                   variant="secondary"
                   onClick={async () => {
-                    if (window.confirm("Disconnect your WhatsApp session?")) {
+                    if (window.confirm("Disconnect your WhatsApp session? A fresh QR code will be generated automatically.")) {
+                      try {
+                        await fetch("/api/whatsapp/reset", { method: "POST" });
+                      } catch (e) { console.error(e); }
                       setIsConnected(false);
                       setGatewayStatus("DISCONNECTED");
+                      setQrCodeData("");
+                      // Auto-load fresh QR after 3 seconds
+                      setTimeout(() => handleLoadQr(), 3000);
                     }
                   }}
                   className="flex-1 text-red-600 hover:bg-red-50"
                 >
-                  Disconnect Number
+                  Disconnect & Relink
                 </Button>
               )}
             </div>
