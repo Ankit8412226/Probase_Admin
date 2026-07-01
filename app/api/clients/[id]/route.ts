@@ -11,7 +11,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireApiUser(request, ["admin", "manager", "business"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const { id } = await params;
     const client = await getClientById(id);
     return client ? apiSuccess(client) : apiError("Client not found", 404);
@@ -25,7 +25,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireApiUser(request, ["admin", "manager", "business"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const payload = await validateRequest(request, clientSchema.partial());
     const { id } = await params;
     const client = await updateClient(id, payload);
@@ -40,7 +40,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireApiUser(request, ["admin", "manager", "business"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const { id } = await params;
     const deleted = await deleteClient(id);
     return deleted ? apiSuccess({ deleted: true }) : apiError("Client not found", 404);

@@ -8,7 +8,7 @@ import { invoiceSchema } from "@/lib/validation/schemas";
 
 export async function GET(request: NextRequest) {
   try {
-    await requireApiUser(request, ["admin", "manager", "business"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const invoices = await getInvoices();
     return apiSuccess(invoices);
   } catch (error) {
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireApiUser(request, ["admin", "manager", "business"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const payload = normalizeEmpty(await validateRequest(request, invoiceSchema), [
       "projectId",
       "paidDate",

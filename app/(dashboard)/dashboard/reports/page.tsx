@@ -3,7 +3,7 @@ import { requireSessionUser } from "@/lib/auth";
 import { getDashboardOverview, getEmployeePerformance } from "@/lib/services/analytics";
 
 export default async function ReportsPage() {
-  await requireSessionUser(["admin", "manager", "business"]);
+  await requireSessionUser(["admin", "manager"]);
   const [overview, performance] = await Promise.all([
     getDashboardOverview(),
     getEmployeePerformance(),

@@ -15,7 +15,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireApiUser(request, ["admin", "manager", "business"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const { id } = await params;
     const invoice = await getInvoiceById(id);
     return invoice ? apiSuccess(invoice) : apiError("Invoice not found", 404);
@@ -29,7 +29,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireApiUser(request, ["admin", "manager", "business"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const payload = normalizeEmpty(await validateRequest(request, invoiceSchema.partial()), [
       "projectId",
       "paidDate",
@@ -47,7 +47,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireApiUser(request, ["admin", "manager", "business"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const { id } = await params;
     const deleted = await deleteInvoice(id);
     return deleted ? apiSuccess({ deleted: true }) : apiError("Invoice not found", 404);

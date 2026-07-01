@@ -5,7 +5,7 @@ import { getTargets } from "@/lib/services/targets";
 import { getEmployees } from "@/lib/services/employees";
 
 export default async function TargetsPage() {
-  await requireSessionUser(["admin", "manager", "business"]);
+  await requireSessionUser(["admin", "manager"]);
 
   const [targets, owners, businessOverview] = await Promise.all([
     getTargets(),

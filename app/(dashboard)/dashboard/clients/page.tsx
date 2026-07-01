@@ -5,7 +5,7 @@ import { getProjects } from "@/lib/services/projects";
 import { getBusinessUsers } from "@/lib/services/users";
 
 export default async function ClientsPage() {
-  await requireSessionUser(["admin", "manager", "business"]);
+  await requireSessionUser(["admin", "manager", "business", "employee"]);
   const [clients, projects, accountManagers] = await Promise.all([
     getClients(),
     getProjects(),

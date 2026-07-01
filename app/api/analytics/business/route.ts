@@ -7,7 +7,7 @@ import { getBusinessOverview } from "@/lib/services/analytics";
 
 export async function GET(request: NextRequest) {
   try {
-    await requireApiUser(request, ["admin", "manager", "business"]);
+    await requireApiUser(request, ["admin"]);
     const overview = await getBusinessOverview();
     return apiSuccess(overview);
   } catch (error) {

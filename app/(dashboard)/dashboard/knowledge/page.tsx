@@ -3,7 +3,7 @@ import { requireSessionUser } from "@/lib/auth";
 import { getKnowledgeArticles } from "@/lib/services/knowledge";
 
 export default async function KnowledgePage() {
-  await requireSessionUser(["admin", "manager", "business"]);
+  await requireSessionUser(["admin", "manager", "business", "employee"]);
   const articles = await getKnowledgeArticles();
 
   return <KnowledgeBaseModule initialArticles={articles} />;

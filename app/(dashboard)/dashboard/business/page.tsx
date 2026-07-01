@@ -9,7 +9,7 @@ import { getTargets } from "@/lib/services/targets";
 import { getBusinessUsers } from "@/lib/services/users";
 
 export default async function BusinessPage() {
-  await requireSessionUser(["admin", "manager", "business"]);
+  await requireSessionUser(["admin"]);
 
   const [overview, owners, leads, proposals, invoices, clients, targets] = await Promise.all([
     getBusinessOverview(),

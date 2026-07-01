@@ -23,18 +23,18 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 
 const navigation = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { href: "/dashboard/business", label: "Business", icon: TrendingUp },
-  { href: "/dashboard/employees", label: "Employees", icon: Users },
-  { href: "/dashboard/salaries", label: "Salaries", icon: DollarSign },
-  { href: "/dashboard/projects", label: "Projects", icon: BriefcaseBusiness },
-  { href: "/dashboard/leads", label: "Leads", icon: UserRoundSearch },
-  { href: "/dashboard/knowledge", label: "Playbooks", icon: BookOpen },
-  { href: "/dashboard/proposals", label: "Proposals", icon: FileText },
-  { href: "/dashboard/clients", label: "Clients", icon: Building2 },
-  { href: "/dashboard/invoices", label: "Invoices", icon: ReceiptText },
-  { href: "/dashboard/targets", label: "Targets", icon: Target },
-  { href: "/dashboard/reports", label: "Reports", icon: BarChart3 },
+  { href: "/dashboard", label: "Overview", icon: LayoutDashboard, allowedRoles: ["admin", "manager", "business", "employee"] },
+  { href: "/dashboard/business", label: "Business", icon: TrendingUp, allowedRoles: ["admin"] },
+  { href: "/dashboard/leads", label: "Leads", icon: UserRoundSearch, allowedRoles: ["admin", "manager", "business", "employee"] },
+  { href: "/dashboard/projects", label: "Projects", icon: BriefcaseBusiness, allowedRoles: ["admin", "manager", "business", "employee"] },
+  { href: "/dashboard/proposals", label: "Proposals", icon: FileText, allowedRoles: ["admin", "manager", "business", "employee"] },
+  { href: "/dashboard/clients", label: "Clients", icon: Building2, allowedRoles: ["admin", "manager", "business", "employee"] },
+  { href: "/dashboard/invoices", label: "Invoices", icon: ReceiptText, allowedRoles: ["admin", "manager", "business", "employee"] },
+  { href: "/dashboard/knowledge", label: "Playbooks", icon: BookOpen, allowedRoles: ["admin", "manager", "business", "employee"] },
+  { href: "/dashboard/employees", label: "Employees", icon: Users, allowedRoles: ["admin", "manager"] },
+  { href: "/dashboard/salaries", label: "Salaries", icon: DollarSign, allowedRoles: ["admin", "manager"] },
+  { href: "/dashboard/targets", label: "Targets", icon: Target, allowedRoles: ["admin", "manager"] },
+  { href: "/dashboard/reports", label: "Reports", icon: BarChart3, allowedRoles: ["admin", "manager"] },
 ];
 
 export function Sidebar({
@@ -51,12 +51,10 @@ export function Sidebar({
   const pathname = usePathname();
   const { user } = useAuth();
  
-  const filteredNavigation = navigation.filter((item) => {
-    if (user?.role === "business") {
-      return item.href !== "/dashboard/employees" && item.href !== "/dashboard/salaries";
-    }
-    return true;
-  });
+  const filteredNavigation = navigation.filter((item) =>
+    user?.role ? item.allowedRoles.includes(user.role) : false
+  );
+
  
   return (
     <>
@@ -87,7 +85,9 @@ export function Sidebar({
             <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-fog">
               Probase Solutions
             </p>
-            <p className="mt-2 text-lg font-semibold tracking-tight">Admin Command Center</p>
+            <p className="mt-2 text-lg font-semibold tracking-tight">
+              {user?.role === "employee" ? "Employee Portal" : user?.role === "business" ? "Business Portal" : "Admin Command Center"}
+            </p>
           </div>
           <button
             type="button"

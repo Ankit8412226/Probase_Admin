@@ -8,7 +8,7 @@ import { clientSchema } from "@/lib/validation/schemas";
 
 export async function GET(request: NextRequest) {
   try {
-    await requireApiUser(request, ["admin", "manager", "business"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const clients = await getClients();
     return apiSuccess(clients);
   } catch (error) {
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireApiUser(request, ["admin", "manager", "business"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const payload = await validateRequest(request, clientSchema);
     const client = await createClient(payload);
     return apiSuccess(client, { status: 201 });

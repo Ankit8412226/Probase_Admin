@@ -10,7 +10,7 @@ import type { KnowledgeBaseRecord } from "@/types";
 
 export async function POST(request: NextRequest) {
   try {
-    await requireApiUser(request, ["admin", "manager", "business"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const { leadId, message, chatHistory = [] } = await request.json();
 
     if (!message) {

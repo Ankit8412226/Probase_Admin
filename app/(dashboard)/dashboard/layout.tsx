@@ -6,7 +6,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await requireSessionUser(["admin", "manager", "business"]);
+  const user = await requireSessionUser(["admin", "manager", "business", "employee"]);
 
   return <DashboardShell user={user}>{children}</DashboardShell>;
 }

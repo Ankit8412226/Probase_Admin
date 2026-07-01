@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "manager" | "business";
+export type UserRole = "admin" | "manager" | "business" | "employee";
 export type LeadStage =
   | "New"
   | "Qualified"

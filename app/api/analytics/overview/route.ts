@@ -7,7 +7,7 @@ import { getDashboardOverview, getEmployeePerformance } from "@/lib/services/ana
 
 export async function GET(request: NextRequest) {
   try {
-    await requireApiUser(request, ["admin", "manager", "business"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const [overview, performance] = await Promise.all([
       getDashboardOverview(),
       getEmployeePerformance(),

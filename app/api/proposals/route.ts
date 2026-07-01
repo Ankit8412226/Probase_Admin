@@ -8,7 +8,7 @@ import { proposalSchema } from "@/lib/validation/schemas";
 
 export async function GET(request: NextRequest) {
   try {
-    await requireApiUser(request, ["admin", "manager", "business"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const proposals = await getProposals();
     return apiSuccess(proposals);
   } catch (error) {
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireApiUser(request, ["admin", "manager", "business"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const payload = normalizeEmpty(await validateRequest(request, proposalSchema), [
       "clientId",
       "sentDate",

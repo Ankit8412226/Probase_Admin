@@ -8,7 +8,7 @@ import { projectSchema } from "@/lib/validation/schemas";
 
 export async function GET(request: NextRequest) {
   try {
-    await requireApiUser(request, ["admin", "manager"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const projects = await getProjects();
     return apiSuccess(projects);
   } catch (error) {
