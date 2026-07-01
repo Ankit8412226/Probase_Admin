@@ -291,9 +291,10 @@ export interface WhatsappCampaignRecord {
   name: string;
   templateText: string;
   mediaUrl?: string;
-  targetType: "Leads" | "Clients";
+  targetType: "Leads" | "Clients" | "Custom";
   status: "Draft" | "Running" | "Completed" | "Failed";
   sentCount: number;
   totalCount: number;
   createdAt: string;
+  customContacts?: Array<{ name: string; phone: string; company?: string }>;
 }

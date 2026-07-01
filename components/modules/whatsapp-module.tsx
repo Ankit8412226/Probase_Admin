@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { MessageSquare, Settings, Zap, History, RefreshCw, QrCode, Wifi, AlertTriangle, Send, Megaphone, Inbox } from "lucide-react";
+import { MessageSquare, Settings, Zap, History, RefreshCw, QrCode, Wifi, AlertTriangle, Send, Megaphone, Inbox, Upload, Plus, Sparkles } from "lucide-react";
 import { DataTable } from "@/components/tables/data-table";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
@@ -12,6 +12,30 @@ import { FieldGroup, FieldLabel, TextInput, TextArea, SelectInput } from "@/comp
 import { Modal } from "@/components/ui/modal";
 import { formatDate } from "@/lib/utils";
 import type { WhatsappLogRecord, WhatsappMessageRecord, WhatsappCampaignRecord } from "@/types";
+
+// Presets templates
+const PRESETS = [
+  {
+    name: "Select Preset Template...",
+    templateText: "",
+    mediaUrl: ""
+  },
+  {
+    name: "🪔 Festive Greeting & Promotion",
+    templateText: "🪔 *Happy Diwali {{name}}!*\n\nWe are offering a *20% early discount* on all Next.js web application designs for *{{company}}* this festive season.\n\nReply to book a free consultancy call today!\n\nBest Regards,\nProbase Team",
+    mediaUrl: "https://images.unsplash.com/photo-1605282490895-d2279c6d3283?q=80&w=600"
+  },
+  {
+    name: "🚀 Product Launch Pitch",
+    templateText: "🚀 *Hi {{name}}!*\n\nWe just launched our new *AI-Powered CRM and Billing cockpit*. As a valued partner of *{{company}}*, we invite you to try our private beta for free!\n\nCheck out the dashboard screenshot and reply to set up your account.",
+    mediaUrl: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=600"
+  },
+  {
+    name: "⚠️ Invoice Payment Reminder",
+    templateText: "⚠️ *Dear {{name}}*,\n\nThis is a friendly reminder that payment for invoice *#INV-2026-004* issued to *{{company}}* is currently pending.\n\nPlease resolve it at your earliest convenience to avoid services interruption.\n\nThank you!",
+    mediaUrl: ""
+  }
+];
 
 export function WhatsappModule({
   initialLogs,
@@ -55,9 +79,15 @@ export function WhatsappModule({
 
   // New Campaign Form Fields
   const [campName, setCampName] = useState("");
-  const [campTargetType, setCampTargetType] = useState<"Leads" | "Clients">("Leads");
+  const [campTargetType, setCampTargetType] = useState<"Leads" | "Clients" | "Custom">("Leads");
   const [campTemplate, setCampTemplate] = useState("Hi {{name}}, we have a special proposal for {{company}}. Let's connect!");
   const [campMediaUrl, setCampMediaUrl] = useState("");
+  
+  // Custom contacts lists
+  const [customList, setCustomList] = useState<Array<{ name: string; phone: string; company?: string }>>([]);
+  const [manualText, setManualText] = useState("");
+  const [csvSuccessMsg, setCsvSuccessMsg] = useState("");
+  const [csvErrorMsg, setCsvErrorMsg] = useState("");
 
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -135,8 +165,6 @@ export function WhatsappModule({
   const loadInbox = async () => {
     setIsLoadingInbox(true);
     try {
-      const res = await fetch("/api/whatsapp/logs"); // Fallback check logs
-      // Wait, we need an endpoint for messages inbox! We'll create '/api/whatsapp/messages' shortly!
       const messagesRes = await fetch("/api/whatsapp/messages");
       const result = await messagesRes.json();
       if (messagesRes.ok && result.success) {
@@ -260,10 +288,99 @@ export function WhatsappModule({
     }
   };
 
+  // Parse CSV file upload client-side
+  const handleCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setCsvSuccessMsg("");
+    setCsvErrorMsg("");
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      if (!text) return;
+
+      try {
+        const lines = text.split("\n");
+        const parsed: Array<{ name: string; phone: string; company?: string }> = [];
+        
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          
+          const parts = line.split(",").map(p => p.trim());
+          if (parts.length >= 2) {
+            const name = parts[0];
+            const phone = parts[1];
+            const company = parts[2] || "";
+            
+            if (phone.length >= 8) {
+              parsed.push({ name, phone, company });
+            }
+          }
+        }
+        
+        if (parsed.length > 0) {
+          setCustomList(parsed);
+          setCsvSuccessMsg(`Loaded ${parsed.length} contacts from CSV!`);
+        } else {
+          setCsvErrorMsg("No valid rows found. Ensure format is: Name,Phone,Company");
+        }
+      } catch (err) {
+        setCsvErrorMsg("Failed to read CSV. Verify format.");
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  // Parse manual text numbers block
+  const handleManualParse = () => {
+    if (!manualText.trim()) return;
+    
+    setCsvSuccessMsg("");
+    setCsvErrorMsg("");
+
+    try {
+      const lines = manualText.split("\n");
+      const parsed: Array<{ name: string; phone: string; company?: string }> = [];
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+
+        const parts = trimmed.split(",").map(p => p.trim());
+        if (parts.length >= 2) {
+          const name = parts[0];
+          const phone = parts[1];
+          const company = parts[2] || "";
+          if (phone.length >= 8) {
+            parsed.push({ name, phone, company });
+          }
+        }
+      }
+
+      if (parsed.length > 0) {
+        setCustomList(parsed);
+        setCsvSuccessMsg(`Added ${parsed.length} manual contacts!`);
+      } else {
+        setCsvErrorMsg("Could not parse contacts. Check format: Name,Phone,Company");
+      }
+    } catch (err) {
+      setCsvErrorMsg("Error parsing inputs.");
+    }
+  };
+
   // Create Campaign
   const handleCreateCampaign = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!campName || !campTemplate) return;
+
+    let finalCustomContacts = customList;
+    if (campTargetType === "Custom" && finalCustomContacts.length === 0) {
+      alert("Please upload a CSV or add manual numbers first.");
+      return;
+    }
 
     setIsCreatingCampaign(true);
     try {
@@ -275,6 +392,7 @@ export function WhatsappModule({
           targetType: campTargetType,
           templateText: campTemplate,
           mediaUrl: campMediaUrl,
+          customContacts: campTargetType === "Custom" ? finalCustomContacts : undefined
         }),
       });
 
@@ -282,6 +400,9 @@ export function WhatsappModule({
         setShowCampaignModal(false);
         setCampName("");
         setCampMediaUrl("");
+        setCustomList([]);
+        setManualText("");
+        setCsvSuccessMsg("");
         loadCampaigns();
       }
     } catch (err) {
@@ -303,6 +424,17 @@ export function WhatsappModule({
     } catch (err) {
       console.error(err);
     }
+  };
+
+  // Helper to format mockup template preview text
+  const getMockPreviewText = (text: string) => {
+    if (!text) return "";
+    let formatted = text
+      .replace(/\{\{name\}\}/gi, "John Doe")
+      .replace(/\{\{company\}\}/gi, "Acme Corp");
+    
+    // Replace *bold* with JSX elements or basic bold markup
+    return formatted;
   };
 
   return (
@@ -783,80 +915,197 @@ export function WhatsappModule({
             title="Create Marketing Campaign"
             description="Create custom broadcasts with dynamic fields and send them to your leads or clients."
           >
-            <form onSubmit={handleCreateCampaign} className="space-y-4">
-              <FieldGroup>
-                <FieldLabel htmlFor="camp-name">Campaign Name</FieldLabel>
-                <TextInput
-                  id="camp-name"
-                  placeholder="e.g. Diwali Offer 2026"
-                  value={campName}
-                  onChange={(e) => setCampName(e.target.value)}
-                  required
-                />
-              </FieldGroup>
+            <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr] max-w-5xl">
+              {/* Form Input fields on left side */}
+              <form onSubmit={handleCreateCampaign} className="space-y-4">
+                <FieldGroup>
+                  <FieldLabel htmlFor="camp-name">Campaign Name</FieldLabel>
+                  <TextInput
+                    id="camp-name"
+                    placeholder="e.g. Diwali Offer 2026"
+                    value={campName}
+                    onChange={(e) => setCampName(e.target.value)}
+                    required
+                  />
+                </FieldGroup>
 
-              <FieldGroup>
-                <FieldLabel htmlFor="camp-target">Target Audience Group</FieldLabel>
-                <SelectInput
-                  id="camp-target"
-                  value={campTargetType}
-                  onChange={(e) => setCampTargetType(e.target.value as any)}
-                >
-                  <option value="Leads">All Leads</option>
-                  <option value="Clients">All Clients</option>
-                </SelectInput>
-              </FieldGroup>
+                <FieldGroup>
+                  <FieldLabel htmlFor="camp-target">Target Audience Group</FieldLabel>
+                  <SelectInput
+                    id="camp-target"
+                    value={campTargetType}
+                    onChange={(e) => setCampTargetType(e.target.value as any)}
+                  >
+                    <option value="Leads">All System Leads</option>
+                    <option value="Clients">All System Clients</option>
+                    <option value="Custom">Custom List / CSV Upload</option>
+                  </SelectInput>
+                </FieldGroup>
 
-              <FieldGroup>
-                <FieldLabel htmlFor="camp-media">Brochure/Image URL (Optional)</FieldLabel>
-                <TextInput
-                  id="camp-media"
-                  placeholder="e.g. https://domain.com/brochure.png"
-                  value={campMediaUrl}
-                  onChange={(e) => setCampMediaUrl(e.target.value)}
-                />
-                <p className="text-[10px] text-fog">Specify a public image link to send as a media card alongside your text template.</p>
-              </FieldGroup>
+                {/* Conditional Custom Contacts upload block */}
+                {campTargetType === "Custom" && (
+                  <div className="rounded-[16px] border border-line bg-mist/35 p-4 space-y-4">
+                    <div className="flex flex-col gap-2">
+                      <FieldLabel htmlFor="camp-csv">Option A: Upload Contacts CSV</FieldLabel>
+                      <div className="flex items-center gap-2 border border-dashed border-line rounded-[12px] bg-white p-3">
+                        <Upload size={16} className="text-fog" />
+                        <input
+                          id="camp-csv"
+                          type="file"
+                          accept=".csv"
+                          onChange={handleCsvUpload}
+                          className="text-xs text-fog"
+                        />
+                      </div>
+                      <p className="text-[9px] text-fog leading-relaxed">CSV structure: **Name,Phone,Company** (one row per line).</p>
+                    </div>
 
-              <FieldGroup>
-                <div className="flex justify-between items-center">
-                  <FieldLabel htmlFor="camp-template">Message Template</FieldLabel>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setCampTemplate(prev => prev + " {{name}}")}
-                      className="text-[10px] bg-mist border border-line rounded px-1.5 py-0.5 hover:bg-line text-black font-mono"
-                    >
-                      + Name
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCampTemplate(prev => prev + " {{company}}")}
-                      className="text-[10px] bg-mist border border-line rounded px-1.5 py-0.5 hover:bg-line text-black font-mono"
-                    >
-                      + Company
-                    </button>
+                    <div className="flex flex-col gap-2">
+                      <FieldLabel htmlFor="camp-manual">Option B: Manual Contacts Entry</FieldLabel>
+                      <TextArea
+                        id="camp-manual"
+                        placeholder="e.g.&#10;Ankit Kumar,+919999999999,Probase&#10;Sophia Carter,+918888888888,Northstar"
+                        value={manualText}
+                        onChange={(e) => setManualText(e.target.value)}
+                        className="text-xs min-h-[70px]"
+                      />
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="self-end text-xs h-8 py-0 px-3"
+                        onClick={handleManualParse}
+                      >
+                        <Plus size={11} className="mr-1" />
+                        Parse Manual Entries
+                      </Button>
+                    </div>
+
+                    {csvSuccessMsg && (
+                      <p className="text-xs text-emerald-600 font-bold">{csvSuccessMsg}</p>
+                    )}
+                    {csvErrorMsg && (
+                      <p className="text-xs text-red-600 font-bold">{csvErrorMsg}</p>
+                    )}
+                  </div>
+                )}
+
+                <FieldGroup>
+                  <FieldLabel htmlFor="camp-media">Brochure/Image URL (Optional)</FieldLabel>
+                  <TextInput
+                    id="camp-media"
+                    placeholder="e.g. https://domain.com/brochure.png"
+                    value={campMediaUrl}
+                    onChange={(e) => setCampMediaUrl(e.target.value)}
+                  />
+                </FieldGroup>
+
+                <FieldGroup>
+                  <div className="flex justify-between items-center">
+                    <FieldLabel htmlFor="camp-template">Message Template</FieldLabel>
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setCampTemplate(prev => prev + " {{name}}")}
+                        className="text-[9px] bg-mist border border-line rounded px-1.5 py-0.5 hover:bg-line text-black font-mono"
+                      >
+                        + Name
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCampTemplate(prev => prev + " {{company}}")}
+                        className="text-[9px] bg-mist border border-line rounded px-1.5 py-0.5 hover:bg-line text-black font-mono"
+                      >
+                        + Company
+                      </button>
+                    </div>
+                  </div>
+                  <TextArea
+                    id="camp-template"
+                    placeholder="Design your broadcast template..."
+                    value={campTemplate}
+                    onChange={(e) => setCampTemplate(e.target.value)}
+                    required
+                    className="min-h-[100px]"
+                  />
+                </FieldGroup>
+
+                {/* Presets template selector */}
+                <FieldGroup>
+                  <FieldLabel htmlFor="camp-preset">Or load template preset</FieldLabel>
+                  <SelectInput
+                    id="camp-preset"
+                    onChange={(e) => {
+                      const idx = Number(e.target.value);
+                      if (idx > 0) {
+                        setCampTemplate(PRESETS[idx].templateText);
+                        setCampMediaUrl(PRESETS[idx].mediaUrl);
+                      }
+                    }}
+                  >
+                    {PRESETS.map((preset, i) => (
+                      <option key={i} value={i}>
+                        {preset.name}
+                      </option>
+                    ))}
+                  </SelectInput>
+                </FieldGroup>
+
+                <div className="flex justify-end gap-3 border-t border-line pt-4">
+                  <Button variant="secondary" type="button" onClick={() => setShowCampaignModal(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isCreatingCampaign}>
+                    {isCreatingCampaign ? "Saving..." : "Create Campaign"}
+                  </Button>
+                </div>
+              </form>
+
+              {/* WhatsApp live preview mockup card on right side */}
+              <div className="border-l border-line pl-6 flex flex-col justify-start">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-fog block mb-3">WhatsApp Live Preview Mockup</span>
+                
+                {/* Live Mockup smartphone wrapper */}
+                <div className="border border-line rounded-[24px] bg-[#efeae2] p-4 w-full max-w-[280px] shadow-sm space-y-3 min-h-[380px] flex flex-col justify-start">
+                  
+                  {/* WhatsApp chat screen top header */}
+                  <div className="flex items-center gap-2 border-b border-line bg-white/70 backdrop-blur-sm p-2 rounded-t-[16px] -mx-4 -mt-4">
+                    <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-xs font-bold text-emerald-800">
+                      PS
+                    </div>
+                    <div>
+                      <h5 className="text-[11px] font-bold text-black leading-none">Probase Solutions</h5>
+                      <span className="text-[8px] text-emerald-600 font-semibold leading-none">online</span>
+                    </div>
+                  </div>
+
+                  {/* Visual mockup message bubble */}
+                  <div className="bg-white rounded-xl rounded-tl-none p-3 text-[11px] text-black shadow-sm border border-line leading-relaxed max-w-[90%] self-start relative">
+                    {/* Media image preview if URL exists */}
+                    {campMediaUrl && (
+                      <div className="rounded-lg overflow-hidden border border-line mb-2 max-h-[140px] bg-mist flex items-center justify-center">
+                        <img
+                          src={campMediaUrl}
+                          alt="Brochure Attachment"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLElement).style.display = "none";
+                          }}
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Dynamic text caption body parsing bold tags */}
+                    <p className="whitespace-pre-wrap leading-relaxed text-[11px]">
+                      {campTemplate 
+                        ? campTemplate.replace(/\{\{name\}\}/gi, "John Doe").replace(/\{\{company\}\}/gi, "Acme Corp")
+                        : "Template preview will dynamically load here..."}
+                    </p>
+                    
+                    <span className="text-[8px] text-fog text-right block mt-1 font-mono">10:42 AM</span>
                   </div>
                 </div>
-                <TextArea
-                  id="camp-template"
-                  placeholder="Design your broadcast template..."
-                  value={campTemplate}
-                  onChange={(e) => setCampTemplate(e.target.value)}
-                  required
-                  className="min-h-[120px]"
-                />
-              </FieldGroup>
-
-              <div className="flex justify-end gap-3 border-t border-line pt-4">
-                <Button variant="secondary" type="button" onClick={() => setShowCampaignModal(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isCreatingCampaign}>
-                  {isCreatingCampaign ? "Saving..." : "Create Campaign"}
-                </Button>
               </div>
-            </form>
+            </div>
           </Modal>
         </div>
       )}

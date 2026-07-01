@@ -27,14 +27,16 @@ export async function POST(request: NextRequest) {
       return apiError("This campaign is already running.", 400);
     }
 
-    // Retrieve targets (Leads or Clients)
+    // Retrieve targets (Leads, Clients, or Custom)
     let targets: Array<{ name: string; phone?: string; company?: string }> = [];
     if (campaign.targetType === "Leads") {
       const leads = await getLeads();
       targets = leads.map(l => ({ name: l.name, phone: l.contact, company: l.source }));
-    } else {
+    } else if (campaign.targetType === "Clients") {
       const clients = await getClients();
       targets = clients.map(c => ({ name: c.name, phone: c.phone, company: c.company }));
+    } else {
+      targets = campaign.customContacts || [];
     }
 
     // Filter valid phone numbers

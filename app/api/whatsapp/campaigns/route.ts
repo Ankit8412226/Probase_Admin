@@ -9,7 +9,14 @@ const campaignCreateSchema = z.object({
   name: z.string().min(3),
   templateText: z.string().min(5),
   mediaUrl: z.string().optional().or(z.literal("")),
-  targetType: z.enum(["Leads", "Clients"]),
+  targetType: z.enum(["Leads", "Clients", "Custom"]),
+  customContacts: z.array(
+    z.object({
+      name: z.string(),
+      phone: z.string(),
+      company: z.string().optional()
+    })
+  ).optional()
 });
 
 export async function GET(request: NextRequest) {
