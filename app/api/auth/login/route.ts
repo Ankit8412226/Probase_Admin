@@ -2,6 +2,7 @@ import { authenticateUser, getAuthCookieConfig, signAuthToken } from "@/lib/auth
 import { handleApiException, validateRequest } from "@/lib/api-route";
 import { apiError, apiSuccess } from "@/lib/http";
 import { loginSchema } from "@/lib/validation/schemas";
+import { markAttendance } from "@/lib/services/attendance";
 
 export async function POST(request: Request) {
   try {
@@ -11,6 +12,9 @@ export async function POST(request: Request) {
     if (!user) {
       return apiError("Invalid email or password", 401);
     }
+
+    // Record password-based attendance check-in
+    await markAttendance(user.id, user.name, user.role, "password");
 
     const response = apiSuccess(user);
     response.cookies.set(getAuthCookieConfig(signAuthToken(user)));

@@ -17,6 +17,7 @@ import {
   TrendingUp,
   Users,
   UserRoundSearch,
+  Clock,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -32,6 +33,7 @@ const navigation = [
   { href: "/dashboard/invoices", label: "Invoices", icon: ReceiptText, allowedRoles: ["admin", "manager", "business", "employee"] },
   { href: "/dashboard/knowledge", label: "Playbooks", icon: BookOpen, allowedRoles: ["admin", "manager", "business", "employee"] },
   { href: "/dashboard/employees", label: "Employees", icon: Users, allowedRoles: ["admin", "manager"] },
+  { href: "/dashboard/attendance", label: "Attendance", icon: Clock, allowedRoles: ["admin", "manager"] },
   { href: "/dashboard/salaries", label: "Salaries", icon: DollarSign, allowedRoles: ["admin", "manager"] },
   { href: "/dashboard/targets", label: "Targets", icon: Target, allowedRoles: ["admin", "manager"] },
   { href: "/dashboard/reports", label: "Reports", icon: BarChart3, allowedRoles: ["admin", "manager"] },

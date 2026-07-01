@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Pencil, Plus, Search, Trash2, ScanFace } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { EmployeeForm } from "@/components/forms/employee-form";
+import { FaceRegisterWidget } from "@/components/modules/face-register-widget";
 import { DataTable } from "@/components/tables/data-table";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -30,6 +32,8 @@ export function EmployeesModule({ initialEmployees }: { initialEmployees: Employ
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("All");
   const [editingEmployee, setEditingEmployee] = useState<EmployeeRecord | null>(null);
+  const [registeringFaceEmployee, setRegisteringFaceEmployee] = useState<EmployeeRecord | null>(null);
+  const router = useRouter();
 
   const canManage = user?.role === "admin";
   const roles = ["All", ...new Set(items.map((employee) => employee.role))];
@@ -138,12 +142,22 @@ export function EmployeesModule({ initialEmployees }: { initialEmployees: Employ
             {
               key: "name",
               header: "Employee",
-              render: (employee) => (
-                <div>
-                  <p className="font-semibold">{employee.name}</p>
-                  <p className="text-sm text-fog">{employee.email}</p>
-                </div>
-              ),
+              render: (employee) => {
+                const isFaceRegistered = !!employee.faceDescriptor && employee.faceDescriptor.length === 128;
+                return (
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold">{employee.name}</p>
+                      {isFaceRegistered && (
+                        <span className="inline-flex items-center justify-center w-4.5 h-4.5 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100" title="Face verification enabled">
+                          <ScanFace size={10} />
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-fog">{employee.email}</p>
+                  </div>
+                );
+              },
             },
             {
               key: "role",
@@ -166,6 +180,17 @@ export function EmployeesModule({ initialEmployees }: { initialEmployees: Employ
               render: (employee) =>
                 canManage ? (
                   <div className="flex items-center gap-2">
+                    <Button
+                      variant="secondary"
+                      className="h-9 px-3"
+                      title="Manage Face Recognition"
+                      onClick={() => {
+                        clearError();
+                        setRegisteringFaceEmployee(employee);
+                      }}
+                    >
+                      <ScanFace size={14} />
+                    </Button>
                     <Button
                       variant="secondary"
                       className="h-9 px-3"
@@ -216,6 +241,24 @@ export function EmployeesModule({ initialEmployees }: { initialEmployees: Employ
           }}
           onSubmit={handleSubmit}
         />
+      </Modal>
+
+      <Modal
+        open={!!registeringFaceEmployee}
+        onClose={() => setRegisteringFaceEmployee(null)}
+        title="Biometric Face Enrollment"
+        description="Register a face recognition profile to enable touchless logins and automated check-ins."
+      >
+        {registeringFaceEmployee && (
+          <FaceRegisterWidget
+            employee={registeringFaceEmployee}
+            onClose={() => setRegisteringFaceEmployee(null)}
+            onRegisterSuccess={() => {
+              setRegisteringFaceEmployee(null);
+              router.refresh();
+            }}
+          />
+        )}
       </Modal>
     </div>
   );

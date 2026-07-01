@@ -7,6 +7,7 @@ const userSchema = new Schema(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     role: { type: String, enum: ["admin", "manager", "business", "employee"], required: true },
     password: { type: String, required: true },
+    faceDescriptor: { type: [Number], required: false },
   },
   {
     timestamps: true,

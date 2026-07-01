@@ -10,6 +10,7 @@ const employeeSchema = new Schema(
     joiningDate: { type: String, required: true },
     loginRole: { type: String, enum: ["admin", "manager", "business", "employee"], required: false },
     password: { type: String, required: false },
+    faceDescriptor: { type: [Number], required: false },
   },
   {
     timestamps: true,

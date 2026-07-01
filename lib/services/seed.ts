@@ -9,9 +9,20 @@ import { seedSalaries } from "@/lib/services/salaries";
 import { resetMemoryStore } from "@/lib/services/store";
 import { seedTargets } from "@/lib/services/targets";
 import { upsertUsers } from "@/lib/services/users";
+import Attendance from "@/models/Attendance";
 
 export async function seedAllData() {
   resetMemoryStore();
+  
+  if (global.probaseStore) {
+    global.probaseStore.attendances = [];
+  }
+
+  try {
+    await Attendance.deleteMany({});
+  } catch (err) {
+    console.log("No MongoDB connection or collection reset skipped:", err);
+  }
 
   await upsertUsers(mockData.users);
   await seedEmployees(mockData.employees);

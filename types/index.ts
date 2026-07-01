@@ -16,6 +16,7 @@ export interface AuthUser {
   name: string;
   email: string;
   role: UserRole;
+  faceDescriptor?: number[];
 }
 
 export interface UserRecord extends AuthUser {
@@ -33,6 +34,7 @@ export interface EmployeeRecord {
   updatedAt?: string;
   loginRole?: UserRole;
   password?: string;
+  faceDescriptor?: number[];
 }
 
 export interface SalaryRecord {
@@ -209,6 +211,21 @@ export interface SeedPayload {
   invoices: InvoiceRecord[];
   targets: TargetRecord[];
   knowledge?: KnowledgeBaseRecord[];
+  attendances?: AttendanceRecord[];
+}
+
+export interface AttendanceRecord {
+  id: string;
+  userId: string;
+  userName: string;
+  userRole: UserRole;
+  date: string; // YYYY-MM-DD
+  loginTime: string; // ISO String
+  logoutTime?: string; // ISO String
+  method: "face" | "password";
+  status: "Present" | "Late";
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ApiSuccess<T> {

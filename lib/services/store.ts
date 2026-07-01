@@ -9,6 +9,9 @@ export function getMemoryStore() {
   if (!global.probaseStore) {
     global.probaseStore = structuredClone(mockData);
   }
+  if (!global.probaseStore.attendances) {
+    global.probaseStore.attendances = [];
+  }
 
   return global.probaseStore;
 }
