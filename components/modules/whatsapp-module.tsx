@@ -16,14 +16,40 @@ import type { WhatsappLogRecord, WhatsappMessageRecord, WhatsappCampaignRecord, 
 // Static presets templates
 const PRESETS = [
   {
+    category: "Marketing",
     name: "🚀 Product Launch Pitch",
     templateText: "🚀 *Hi {{name}}!*\n\nWe just launched our new *AI-Powered CRM and Billing cockpit*. As a valued partner of *{{company}}*, we invite you to try our private beta for free!\n\nCheck out the dashboard screenshot and reply to set up your account.",
     mediaUrl: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=600"
   },
   {
-    name: "⚠️ Invoice Payment Reminder",
-    templateText: "⚠️ *Dear {{name}}*,\n\nThis is a friendly reminder that payment for invoice *#INV-2026-004* issued to *{{company}}* is currently pending.\n\nPlease resolve it at your earliest convenience to avoid services interruption.\n\nThank you!",
-    mediaUrl: ""
+    category: "Marketing",
+    name: "🔥 Festive Discount Promo",
+    templateText: "🔥 *Special Offer for {{name}}!*\n\nGet exactly *{{var1}}* off on all our premium packages at *{{company}}*! Use code *PROBASE2026* at checkout.\n\nClaim your coupon today by replying to this message!",
+    mediaUrl: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=600"
+  },
+  {
+    category: "Sales & Pitching",
+    name: "🤝 Discovery Call Followup",
+    templateText: "🤝 *Hi {{name}}*,\n\nIt was great discussing your goals for *{{company}}* today. As agreed, we've blocked a slot on *{{var1}}* for our deep-dive architecture design call.\n\nLooking forward to speaking soon!",
+    mediaUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600"
+  },
+  {
+    category: "Client Operations",
+    name: "📦 Milestone Delivery Signoff",
+    templateText: "📦 *Hello {{name}}*,\n\nOur team has successfully completed the development milestone: *{{var1}}* for your project at *{{company}}*.\n\nPlease preview the staging release here: {{var2}}\n\nReply to confirm signoff!",
+    mediaUrl: "https://images.unsplash.com/photo-1531403009284-440f080d1e12?q=80&w=600"
+  },
+  {
+    category: "Billing & Invoices",
+    name: "⚠️ Invoice Pending Alert",
+    templateText: "⚠️ *Dear {{name}}*,\n\nThis is a friendly reminder that invoice *{{var1}}* issued to *{{company}}* is currently pending, with a due date of *{{var2}}*.\n\nPlease resolve it to avoid services interruption. Thank you!",
+    mediaUrl: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=600"
+  },
+  {
+    category: "Onboarding",
+    name: "🎉 Partner Welcome Greeting",
+    templateText: "🎉 *Welcome aboard, {{name}}!*\n\nWe are absolutely thrilled to partner with *{{company}}*. Your onboarding checklist is ready.\n\nYour assigned Account Manager *{{var1}}* will connect with you shortly!",
+    mediaUrl: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=600"
   }
 ];
 
@@ -1165,13 +1191,18 @@ export function WhatsappModule({
                     }}
                   >
                     <option value="-1">Select preset...</option>
-                    <optgroup label="System Defaults">
-                      {PRESETS.map((preset, i) => (
-                        <option key={i} value={i}>
-                          {preset.name}
-                        </option>
-                      ))}
-                    </optgroup>
+                    {Array.from(new Set(PRESETS.map(p => p.category))).map(cat => (
+                      <optgroup key={cat} label={`System Defaults: ${cat}`}>
+                        {PRESETS.map((preset, i) => {
+                          if (preset.category !== cat) return null;
+                          return (
+                            <option key={i} value={i}>
+                              {preset.name}
+                            </option>
+                          );
+                        })}
+                      </optgroup>
+                    ))}
                     {customTemplates.length > 0 && (
                       <optgroup label="My Templates Library">
                         {customTemplates.map((t) => (
