@@ -215,6 +215,8 @@ export interface SeedPayload {
   attendances?: AttendanceRecord[];
   shifts?: ShiftRecord[];
   whatsappLogs?: WhatsappLogRecord[];
+  whatsappMessages?: WhatsappMessageRecord[];
+  whatsappCampaigns?: WhatsappCampaignRecord[];
 }
 
 export interface WhatsappLogRecord {
@@ -272,4 +274,26 @@ export interface KnowledgeBaseRecord {
   tags?: string[];
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface WhatsappMessageRecord {
+  id: string;
+  senderPhone: string;
+  senderName: string;
+  messageText: string;
+  timestamp: string;
+  sessionId: string;
+  createdAt?: string;
+}
+
+export interface WhatsappCampaignRecord {
+  id: string;
+  name: string;
+  templateText: string;
+  mediaUrl?: string;
+  targetType: "Leads" | "Clients";
+  status: "Draft" | "Running" | "Completed" | "Failed";
+  sentCount: number;
+  totalCount: number;
+  createdAt: string;
 }

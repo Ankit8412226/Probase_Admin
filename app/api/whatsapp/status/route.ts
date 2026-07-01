@@ -13,11 +13,14 @@ export async function GET(request: NextRequest) {
       return apiSuccess({ status: "DISCONNECTED", message: "Gateway not configured" });
     }
 
+    const { searchParams } = new URL(request.url);
+    const sessionId = searchParams.get("sessionId") || "default";
+
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 6000); // 6 seconds timeout limit
 
-      const res = await fetch(`${config.gatewayUrl.replace(/\/$/, "")}/status`, {
+      const res = await fetch(`${config.gatewayUrl.replace(/\/$/, "")}/status?sessionId=${sessionId}`, {
         method: "GET",
         headers: { "Accept": "application/json" },
         signal: controller.signal,

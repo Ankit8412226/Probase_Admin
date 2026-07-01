@@ -18,6 +18,12 @@ export function getMemoryStore() {
   if (!global.probaseStore.whatsappLogs) {
     global.probaseStore.whatsappLogs = [];
   }
+  if (!global.probaseStore.whatsappMessages) {
+    global.probaseStore.whatsappMessages = [];
+  }
+  if (!global.probaseStore.whatsappCampaigns) {
+    global.probaseStore.whatsappCampaigns = [];
+  }
 
   return global.probaseStore;
 }

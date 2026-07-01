@@ -13,6 +13,17 @@ export async function POST(request: NextRequest) {
       return apiError("Gateway URL not configured.", 400);
     }
 
+    const { searchParams } = new URL(request.url);
+    const querySessionId = searchParams.get("sessionId");
+    
+    let bodySessionId = "";
+    try {
+      const body = await request.json();
+      bodySessionId = body.sessionId;
+    } catch {}
+
+    const sessionId = querySessionId || bodySessionId || "default";
+
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000);
@@ -20,6 +31,7 @@ export async function POST(request: NextRequest) {
       const res = await fetch(`${config.gatewayUrl.replace(/\/$/, "")}/reset`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId }),
         signal: controller.signal,
       });
 

@@ -8,13 +8,13 @@ export async function POST(request: NextRequest) {
   try {
     await requireApiUser(request, ["admin", "manager"]);
     const body = await request.json();
-    const { phone, message } = body;
+    const { phone, message, sessionId } = body;
 
     if (!phone || !message) {
       return apiError("Recipient phone number and message are required", 400);
     }
 
-    const log = await sendWhatsappAlert("Test Contact", phone, message, "test");
+    const log = await sendWhatsappAlert("Test Contact", phone, message, "test", sessionId || "default");
     return apiSuccess(log);
   } catch (error) {
     return handleApiException(error);

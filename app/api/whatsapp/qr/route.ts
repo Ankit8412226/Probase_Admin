@@ -13,11 +13,14 @@ export async function GET(request: NextRequest) {
       return apiError("Please configure a valid WhatsApp Gateway URL in the settings panel first.", 400);
     }
 
+    const { searchParams } = new URL(request.url);
+    const sessionId = searchParams.get("sessionId") || "default";
+
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 6000); // 6 seconds timeout limit
 
-      const res = await fetch(`${config.gatewayUrl.replace(/\/$/, "")}/qr`, {
+      const res = await fetch(`${config.gatewayUrl.replace(/\/$/, "")}/qr?sessionId=${sessionId}`, {
         method: "GET",
         headers: { "Accept": "application/json" },
         signal: controller.signal,
