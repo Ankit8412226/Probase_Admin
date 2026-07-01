@@ -8,7 +8,7 @@ import { targetSchema } from "@/lib/validation/schemas";
 
 export async function GET(request: NextRequest) {
   try {
-    await requireApiUser(request, ["admin", "manager", "business"]);
+    await requireApiUser(request, ["admin", "manager"]);
     const targets = await getTargets();
     return apiSuccess(targets);
   } catch (error) {
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireApiUser(request, ["admin", "manager", "business"]);
+    await requireApiUser(request, ["admin", "manager"]);
     const payload = await validateRequest(request, targetSchema);
     const target = await createTarget(payload);
     return apiSuccess(target, { status: 201 });

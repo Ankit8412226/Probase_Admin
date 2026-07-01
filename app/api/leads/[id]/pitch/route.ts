@@ -8,7 +8,7 @@ import { updateLead } from "@/lib/services/leads";
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    await requireApiUser(request, ["admin", "manager", "business"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const { emailPitch } = await request.json();
     const lead = await updateLead(id, { emailPitch });
     if (!lead) {

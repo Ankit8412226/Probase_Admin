@@ -8,7 +8,7 @@ import { generateWithGemini } from "@/lib/gemini";
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    await requireApiUser(request, ["admin", "manager", "business"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
 
     const lead = await getLeadById(id);
     if (!lead) {

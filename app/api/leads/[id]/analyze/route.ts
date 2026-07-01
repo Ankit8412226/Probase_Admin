@@ -10,7 +10,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireApiUser(request, ["admin", "manager", "business"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const { id } = await params;
 
     const lead = await getLeadById(id);
