@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "whatsapp": "node scripts/whatsapp-gateway.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
