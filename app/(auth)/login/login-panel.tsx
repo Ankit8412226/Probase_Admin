@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 
 import { FieldGroup, FieldLabel, TextInput } from "@/components/forms/form-primitives";
-import { seededCredentials } from "@/lib/data/seed-credentials";
 import { Button } from "@/components/ui/button";
 import type { ApiResponse, AuthUser } from "@/types";
 import { loadFaceApi, loadModels } from "@/lib/face-loader";
@@ -14,8 +13,8 @@ export function LoginPanel() {
   const router = useRouter();
   
   // Standard login fields
-  const [email, setEmail] = useState<string>(seededCredentials[0].email);
-  const [password, setPassword] = useState<string>(seededCredentials[0].password);
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -461,14 +460,7 @@ export function LoginPanel() {
             )}
           </div>
 
-          <div className="mt-6 rounded-[18px] border border-line bg-mist p-5 text-sm text-fog">
-            <p className="font-semibold text-black">Seeded credentials</p>
-            {seededCredentials.map((credential, index) => (
-              <p key={credential.email} className={index === 0 ? "mt-2" : "mt-1"}>
-                {credential.label}: `{credential.email}` / `{credential.password}`
-              </p>
-            ))}
-          </div>
+
         </div>
       </section>
     </div>
