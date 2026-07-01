@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
+import { Sparkles, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   FieldGroup,
@@ -9,6 +9,7 @@ import {
   FormGrid,
   SelectInput,
   TextInput,
+  TextArea,
 } from "@/components/forms/form-primitives";
 import type { AuthUser, ClientRecord, LeadRecord, ProposalRecord } from "@/types";
 
@@ -23,6 +24,7 @@ const defaultValues: ProposalPayload = {
   status: "Draft",
   sentDate: "",
   validUntil: "",
+  content: "",
 };
 
 export function ProposalForm({
@@ -44,6 +46,11 @@ export function ProposalForm({
 }) {
   const [values, setValues] = useState<ProposalPayload>(defaultValues);
 
+  // AI states
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [aiError, setAiError] = useState("");
+
   useEffect(() => {
     if (initialValues) {
       setValues({
@@ -55,6 +62,7 @@ export function ProposalForm({
         status: initialValues.status,
         sentDate: initialValues.sentDate ?? "",
         validUntil: initialValues.validUntil,
+        content: initialValues.content ?? "",
       });
       return;
     }
@@ -64,17 +72,89 @@ export function ProposalForm({
       leadId: leads[0]?.id ?? "",
       clientId: clients[0]?.id ?? "",
       ownerId: owners[0]?.id ?? "",
+      validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // default 30 days validity
     });
   }, [clients, initialValues, leads, owners]);
 
+  // Call AI generator API
+  const handleAiGenerate = async () => {
+    if (!aiPrompt.trim()) {
+      setAiError("Please describe the project details first.");
+      return;
+    }
+
+    setIsGenerating(true);
+    setAiError("");
+
+    try {
+      const response = await fetch("/api/proposals/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: aiPrompt }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        const { title, amount, content } = result.data;
+        setValues((prev) => ({
+          ...prev,
+          title: title || prev.title,
+          amount: amount || prev.amount,
+          content: content || prev.content,
+        }));
+      } else {
+        setAiError(result.message || "Failed to generate proposal.");
+      }
+    } catch (err) {
+      setAiError("Connection error while communicating with AI.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <form
-      className="space-y-5"
+      className="space-y-5 max-w-2xl mx-auto"
       onSubmit={async (event) => {
         event.preventDefault();
         await onSubmit(values);
       }}
     >
+      {/* AI Wizard Panel */}
+      {!initialValues && (
+        <div className="rounded-[18px] border border-amber-200/50 bg-amber-50/30 p-4 space-y-3">
+          <div className="flex items-center gap-2 text-amber-800">
+            <Sparkles size={16} className="text-amber-500 fill-amber-500" />
+            <h4 className="text-sm font-bold tracking-tight">AI Proposal Copilot</h4>
+          </div>
+          <p className="text-xs text-fog">
+            Describe what organization features you want to build and the target budget. Gemini AI will generate the proposal details, amount, and markdown modules.
+          </p>
+          <div className="flex gap-2">
+            <TextInput
+              placeholder="e.g. Next.js SaaS app with clean analytics, 3 months delivery, budget ₹2,50,000"
+              value={aiPrompt}
+              onChange={(e) => setAiPrompt(e.target.value)}
+              className="bg-white border-amber-200/60 focus:border-amber-400"
+              disabled={isGenerating}
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              className="shrink-0 bg-amber-100/60 text-amber-800 border border-amber-200/55 hover:bg-amber-100"
+              onClick={handleAiGenerate}
+              disabled={isGenerating}
+            >
+              {isGenerating ? <RefreshCw size={14} className="animate-spin" /> : "Draft ✨"}
+            </Button>
+          </div>
+          {aiError && (
+            <p className="text-xs text-red-600 font-semibold">{aiError}</p>
+          )}
+        </div>
+      )}
+
       <FormGrid>
         <FieldGroup>
           <FieldLabel htmlFor="proposal-title">Proposal title</FieldLabel>
@@ -82,7 +162,7 @@ export function ProposalForm({
             id="proposal-title"
             value={values.title}
             onChange={(event) => setValues((current) => ({ ...current, title: event.target.value }))}
-            placeholder="Northstar migration proposal"
+            placeholder="e.g. Next.js Migration Blueprint"
             required
           />
         </FieldGroup>
@@ -189,7 +269,22 @@ export function ProposalForm({
           />
         </FieldGroup>
       </FormGrid>
-      <div className="flex justify-end gap-3">
+
+      {/* Rich content proposal editor */}
+      <FieldGroup>
+        <FieldLabel htmlFor="proposal-content">Proposal Content (Markdown Details)</FieldLabel>
+        <TextArea
+          id="proposal-content"
+          value={values.content}
+          onChange={(event) =>
+            setValues((current) => ({ ...current, content: event.target.value }))
+          }
+          placeholder="### Project Overview&#10;Describe modules, milestone installments, deliverables, terms & conditions..."
+          className="min-h-[220px]"
+        />
+      </FieldGroup>
+
+      <div className="flex justify-end gap-3 border-t border-line pt-4">
         <Button type="button" variant="secondary" onClick={onCancel}>
           Cancel
         </Button>

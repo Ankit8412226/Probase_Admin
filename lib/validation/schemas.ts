@@ -11,7 +11,7 @@ export const employeeSchema = z.object({
   role: z.string().min(2),
   salary: z.coerce.number().positive(),
   joiningDate: z.string().min(10),
-  loginRole: z.enum(["admin", "manager", "business"]).optional().or(z.literal("")),
+  loginRole: z.enum(["admin", "manager", "business", "employee"]).optional().or(z.literal("")),
   password: z.string().min(8).optional().or(z.literal("")),
 });
 
@@ -71,6 +71,7 @@ export const proposalSchema = z.object({
   status: z.enum(["Draft", "Sent", "Accepted", "Rejected", "Expired"]),
   sentDate: z.string().optional().or(z.literal("")),
   validUntil: z.string().min(10),
+  content: z.string().optional(),
 });
 
 export const partPaymentSchema = z.object({

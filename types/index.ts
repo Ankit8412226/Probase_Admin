@@ -107,6 +107,7 @@ export interface ProposalRecord {
   status: ProposalStatus;
   sentDate?: string;
   validUntil: string;
+  content?: string;
   createdAt?: string;
   updatedAt?: string;
 }

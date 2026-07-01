@@ -42,6 +42,7 @@ export function ProposalsModule({
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [editingProposal, setEditingProposal] = useState<ProposalRecord | null>(null);
+  const [viewingProposal, setViewingProposal] = useState<ProposalRecord | null>(null);
 
   const filteredProposals = items.filter((proposal) => {
     const lead = leads.find((item) => item.id === proposal.leadId);
@@ -157,12 +158,16 @@ export function ProposalsModule({
               key: "title",
               header: "Proposal",
               render: (proposal) => (
-                <div>
-                  <p className="font-semibold">{proposal.title}</p>
-                  <p className="text-sm text-fog">
+                <button
+                  type="button"
+                  className="text-left group hover:underline focus:outline-none"
+                  onClick={() => setViewingProposal(proposal)}
+                >
+                  <p className="font-semibold text-black group-hover:text-black">{proposal.title}</p>
+                  <p className="text-xs text-fog">
                     {leads.find((lead) => lead.id === proposal.leadId)?.name ?? "Unknown lead"}
                   </p>
-                </div>
+                </button>
               ),
             },
             {
@@ -205,6 +210,14 @@ export function ProposalsModule({
               header: "Actions",
               render: (proposal) => (
                 <div className="flex items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    className="h-9 px-3"
+                    title="View Proposal Details"
+                    onClick={() => setViewingProposal(proposal)}
+                  >
+                    <FileText size={14} />
+                  </Button>
                   <Button
                     variant="secondary"
                     className="h-9 px-3"
@@ -256,6 +269,33 @@ export function ProposalsModule({
           }}
           onSubmit={handleSubmit}
         />
+      </Modal>
+
+      {/* Viewing Proposal Details Modal */}
+      <Modal
+        open={!!viewingProposal}
+        onClose={() => setViewingProposal(null)}
+        title={viewingProposal?.title || "Proposal Details"}
+        description={`Commercial Value: ${viewingProposal ? formatCurrency(viewingProposal.amount) : "—"} • Status: ${viewingProposal?.status || "Draft"}`}
+      >
+        <div className="space-y-4">
+          <div className="max-h-[360px] overflow-y-auto border border-line rounded-[16px] p-4 bg-mist/35 text-sm text-black whitespace-pre-wrap font-sans leading-relaxed">
+            {viewingProposal?.content ? (
+              viewingProposal.content
+            ) : (
+              <p className="text-fog text-center py-6">No detailed content generated for this proposal yet. Edit the proposal or use the AI Copilot to generate deliverables.</p>
+            )}
+          </div>
+          <div className="flex justify-end gap-3 border-t border-line pt-4">
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={() => setViewingProposal(null)}
+            >
+              Close
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

@@ -15,6 +15,7 @@ const proposalSchema = new Schema(
     },
     sentDate: { type: String },
     validUntil: { type: String, required: true },
+    content: { type: String, required: false },
   },
   {
     timestamps: true,
