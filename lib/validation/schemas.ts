@@ -64,8 +64,10 @@ export const clientSchema = z.object({
 
 export const proposalSchema = z.object({
   title: z.string().min(2),
-  leadId: z.string().min(1),
+  leadId: z.string().optional().or(z.literal("")),
   clientId: z.string().optional().or(z.literal("")),
+  recipientName: z.string().optional().or(z.literal("")),
+  recipientPhone: z.string().optional().or(z.literal("")),
   ownerId: z.string().min(1),
   amount: z.coerce.number().positive(),
   status: z.enum(["Draft", "Sent", "Accepted", "Rejected", "Expired"]),

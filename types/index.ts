@@ -100,8 +100,10 @@ export interface ClientRecord {
 export interface ProposalRecord {
   id: string;
   title: string;
-  leadId: string;
+  leadId?: string;
   clientId?: string;
+  recipientName?: string;
+  recipientPhone?: string;
   ownerId: string;
   amount: number;
   status: ProposalStatus;

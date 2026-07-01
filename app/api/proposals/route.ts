@@ -23,12 +23,29 @@ export async function POST(request: NextRequest) {
     await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const payload = normalizeEmpty(await validateRequest(request, proposalSchema), [
       "clientId",
+      "leadId",
+      "recipientName",
+      "recipientPhone",
       "sentDate",
     ]);
     const proposal = await createProposal(payload);
 
-    // Trigger WhatsApp alert to client
-    if (proposal.clientId) {
+    // Trigger WhatsApp alert to client/recipient
+    const targetPhone = proposal.recipientPhone || "";
+    const targetName = proposal.recipientName || "Valued Client";
+
+    if (targetPhone) {
+      try {
+        sendWhatsappAlert(
+          targetName,
+          targetPhone,
+          `🏢 *New Proposal Submitted*\n\nDear ${targetName},\nWe have created a new proposal for your review: *"${proposal.title}"*\n\n*Amount:* ₹${proposal.amount.toLocaleString("en-IN")}\n*Valid Until:* ${proposal.validUntil}\n\nThank you,\nProbase Solution`,
+          "proposal"
+        ).catch((err) => console.error(err));
+      } catch (err) {
+        console.error("WhatsApp proposal alert failed:", err);
+      }
+    } else if (proposal.clientId) {
       try {
         const client = await getClientById(proposal.clientId);
         if (client && client.phone) {

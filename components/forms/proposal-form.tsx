@@ -19,6 +19,8 @@ const defaultValues: ProposalPayload = {
   title: "",
   leadId: "",
   clientId: "",
+  recipientName: "",
+  recipientPhone: "",
   ownerId: "",
   amount: 0,
   status: "Draft",
@@ -55,8 +57,10 @@ export function ProposalForm({
     if (initialValues) {
       setValues({
         title: initialValues.title,
-        leadId: initialValues.leadId,
+        leadId: initialValues.leadId ?? "",
         clientId: initialValues.clientId ?? "",
+        recipientName: initialValues.recipientName ?? "",
+        recipientPhone: initialValues.recipientPhone ?? "",
         ownerId: initialValues.ownerId,
         amount: initialValues.amount,
         status: initialValues.status,
@@ -69,8 +73,10 @@ export function ProposalForm({
 
     setValues({
       ...defaultValues,
-      leadId: leads[0]?.id ?? "",
-      clientId: clients[0]?.id ?? "",
+      leadId: "",
+      clientId: "",
+      recipientName: "",
+      recipientPhone: "",
       ownerId: owners[0]?.id ?? "",
       validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // default 30 days validity
     });
@@ -167,12 +173,13 @@ export function ProposalForm({
           />
         </FieldGroup>
         <FieldGroup>
-          <FieldLabel htmlFor="proposal-lead">Lead</FieldLabel>
+          <FieldLabel htmlFor="proposal-lead">Lead (Optional)</FieldLabel>
           <SelectInput
             id="proposal-lead"
             value={values.leadId}
             onChange={(event) => setValues((current) => ({ ...current, leadId: event.target.value }))}
           >
+            <option value="">Unassigned</option>
             {leads.map((lead) => (
               <option key={lead.id} value={lead.id}>
                 {lead.name}
@@ -181,7 +188,7 @@ export function ProposalForm({
           </SelectInput>
         </FieldGroup>
         <FieldGroup>
-          <FieldLabel htmlFor="proposal-client">Client</FieldLabel>
+          <FieldLabel htmlFor="proposal-client">Client (Optional)</FieldLabel>
           <SelectInput
             id="proposal-client"
             value={values.clientId}
@@ -196,6 +203,24 @@ export function ProposalForm({
               </option>
             ))}
           </SelectInput>
+        </FieldGroup>
+        <FieldGroup>
+          <FieldLabel htmlFor="proposal-recipient-name">Recipient Name (Optional)</FieldLabel>
+          <TextInput
+            id="proposal-recipient-name"
+            value={values.recipientName || ""}
+            onChange={(event) => setValues((current) => ({ ...current, recipientName: event.target.value }))}
+            placeholder="e.g. Rahul Sharma"
+          />
+        </FieldGroup>
+        <FieldGroup>
+          <FieldLabel htmlFor="proposal-recipient-phone">Recipient Phone (Optional - WhatsApp)</FieldLabel>
+          <TextInput
+            id="proposal-recipient-phone"
+            value={values.recipientPhone || ""}
+            onChange={(event) => setValues((current) => ({ ...current, recipientPhone: event.target.value }))}
+            placeholder="e.g. +919999999999"
+          />
         </FieldGroup>
         <FieldGroup>
           <FieldLabel htmlFor="proposal-owner">Owner</FieldLabel>

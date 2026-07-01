@@ -4,8 +4,10 @@ const proposalSchema = new Schema(
   {
     _id: { type: String, required: true },
     title: { type: String, required: true, trim: true },
-    leadId: { type: String, required: true, ref: "Lead" },
+    leadId: { type: String, required: false, ref: "Lead" },
     clientId: { type: String, ref: "Client" },
+    recipientName: { type: String, required: false },
+    recipientPhone: { type: String, required: false },
     ownerId: { type: String, required: true, ref: "User" },
     amount: { type: Number, required: true },
     status: {
