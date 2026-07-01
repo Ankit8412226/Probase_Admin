@@ -7,6 +7,7 @@ import { getMemoryStore } from "@/lib/services/store";
 import type { AttendanceRecord } from "@/types";
 
 import { getShifts } from "@/lib/services/shifts";
+import { sendWhatsappAlert } from "@/lib/services/whatsapp";
 
 export async function getAttendances() {
   if (useMemoryStore()) {
@@ -86,6 +87,15 @@ export async function markAttendance(
     };
     store.attendances = store.attendances || [];
     store.attendances.unshift(record);
+
+    // Trigger WhatsApp check-in alert
+    sendWhatsappAlert(
+      userName,
+      "+919999999999",
+      `👋 Hello ${userName}, your attendance for today (${dateStr}) has been marked as ${status === "Present" ? "On Time" : "Late"} (Checked in via ${method}).`,
+      "attendance"
+    ).catch((err) => console.error("WhatsApp trigger failed:", err));
+
     return record;
   }
 
@@ -108,7 +118,17 @@ export async function markAttendance(
   };
 
   const created = await Attendance.create(newRecord);
-  return mapDocument(created.toObject() as unknown as { _id: string } & AttendanceRecord);
+  const mapped = mapDocument(created.toObject() as unknown as { _id: string } & AttendanceRecord);
+
+  // Trigger WhatsApp check-in alert
+  sendWhatsappAlert(
+    userName,
+    "+919999999999",
+    `👋 Hello ${userName}, your attendance for today (${dateStr}) has been marked as ${status === "Present" ? "On Time" : "Late"} (Checked in via ${method}).`,
+    "attendance"
+  ).catch((err) => console.error("WhatsApp trigger failed:", err));
+
+  return mapped;
 }
 
 export async function updateFaceDescriptor(userId: string, descriptor: number[]) {

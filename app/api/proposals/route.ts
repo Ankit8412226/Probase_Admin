@@ -5,6 +5,8 @@ import { handleApiException, normalizeEmpty, validateRequest } from "@/lib/api-r
 import { apiSuccess } from "@/lib/http";
 import { createProposal, getProposals } from "@/lib/services/proposals";
 import { proposalSchema } from "@/lib/validation/schemas";
+import { getClientById } from "@/lib/services/clients";
+import { sendWhatsappAlert } from "@/lib/services/whatsapp";
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,6 +26,24 @@ export async function POST(request: NextRequest) {
       "sentDate",
     ]);
     const proposal = await createProposal(payload);
+
+    // Trigger WhatsApp alert to client
+    if (proposal.clientId) {
+      try {
+        const client = await getClientById(proposal.clientId);
+        if (client && client.phone) {
+          sendWhatsappAlert(
+            client.name,
+            client.phone,
+            `🏢 *New Proposal Submitted*\n\nDear ${client.name},\nWe have created a new proposal for your review: *"${proposal.title}"*\n\n*Amount:* ₹${proposal.amount.toLocaleString("en-IN")}\n*Valid Until:* ${proposal.validUntil}\n\nThank you,\nProbase Solution`,
+            "proposal"
+          ).catch((err) => console.error(err));
+        }
+      } catch (err) {
+        console.error("WhatsApp proposal alert failed:", err);
+      }
+    }
+
     return apiSuccess(proposal, { status: 201 });
   } catch (error) {
     return handleApiException(error);

@@ -19,6 +19,7 @@ import {
   UserRoundSearch,
   Clock,
   Calendar,
+  MessageSquare,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -37,6 +38,7 @@ const navigation = [
   { href: "/dashboard/attendance", label: "Attendance", icon: Clock, allowedRoles: ["admin", "manager"] },
   { href: "/dashboard/shifts", label: "Shifts", icon: Calendar, allowedRoles: ["admin", "manager"] },
   { href: "/dashboard/salaries", label: "Salaries", icon: DollarSign, allowedRoles: ["admin", "manager"] },
+  { href: "/dashboard/whatsapp", label: "WhatsApp", icon: MessageSquare, allowedRoles: ["admin", "manager"] },
   { href: "/dashboard/targets", label: "Targets", icon: Target, allowedRoles: ["admin", "manager"] },
   { href: "/dashboard/reports", label: "Reports", icon: BarChart3, allowedRoles: ["admin", "manager"] },
 ];

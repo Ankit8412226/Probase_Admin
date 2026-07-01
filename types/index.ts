@@ -214,6 +214,17 @@ export interface SeedPayload {
   knowledge?: KnowledgeBaseRecord[];
   attendances?: AttendanceRecord[];
   shifts?: ShiftRecord[];
+  whatsappLogs?: WhatsappLogRecord[];
+}
+
+export interface WhatsappLogRecord {
+  id: string;
+  recipientName: string;
+  recipientPhone: string;
+  message: string;
+  status: "Sent" | "Failed";
+  type: "attendance" | "invoice" | "proposal" | "test";
+  createdAt: string;
 }
 
 export interface ShiftRecord {

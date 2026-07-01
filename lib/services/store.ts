@@ -15,6 +15,9 @@ export function getMemoryStore() {
   if (!global.probaseStore.shifts) {
     global.probaseStore.shifts = [];
   }
+  if (!global.probaseStore.whatsappLogs) {
+    global.probaseStore.whatsappLogs = [];
+  }
 
   return global.probaseStore;
 }
