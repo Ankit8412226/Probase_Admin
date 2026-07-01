@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FieldGroup, FieldLabel, TextInput, TextArea, SelectInput } from "@/components/forms/form-primitives";
 import { Modal } from "@/components/ui/modal";
-import { formatDate } from "@/lib/utils";
+import { formatDate, cn } from "@/lib/utils";
 import type { WhatsappLogRecord, WhatsappMessageRecord, WhatsappCampaignRecord, WhatsappTemplateRecord, WhatsappRuleRecord } from "@/types";
 
 // Static presets templates
@@ -51,6 +51,15 @@ const PRESETS = [
     templateText: "🎉 *Welcome aboard, {{name}}!*\n\nWe are absolutely thrilled to partner with *{{company}}*. Your onboarding checklist is ready.\n\nYour assigned Account Manager *{{var1}}* will connect with you shortly!",
     mediaUrl: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=600"
   }
+];
+
+const STOCK_ASSETS = [
+  { name: "🚀 Launch Product", url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=600" },
+  { name: "🔥 Special Discount", url: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=600" },
+  { name: "📅 Booking & Meeting", url: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600" },
+  { name: "⚠️ Billing Ledger", url: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=600" },
+  { name: "🎉 Onboarding Success", url: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=600" },
+  { name: "📦 Operations Milestone", url: "https://images.unsplash.com/photo-1531403009284-440f080d1e12?q=80&w=600" }
 ];
 
 export function WhatsappModule({
@@ -1114,6 +1123,28 @@ export function WhatsappModule({
                     value={campMediaUrl}
                     onChange={(e) => setCampMediaUrl(e.target.value)}
                   />
+                  <div className="mt-2 space-y-1.5">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider font-mono">Or select a pre-designed asset graphic:</span>
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                      {STOCK_ASSETS.map((asset) => (
+                        <button
+                          key={asset.url}
+                          type="button"
+                          onClick={() => setCampMediaUrl(asset.url)}
+                          className={cn(
+                            "relative h-12 rounded-lg overflow-hidden border border-line text-left transition hover:opacity-85 outline-none focus:outline-none",
+                            campMediaUrl === asset.url ? "ring-2 ring-emerald-500 border-transparent" : "border-line"
+                          )}
+                          title={asset.name}
+                        >
+                          <img src={asset.url} alt={asset.name} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 flex items-end p-1">
+                            <span className="text-[8px] font-bold text-white truncate w-full leading-none">{asset.name.split(" ")[1]}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </FieldGroup>
 
                 <FieldGroup>
@@ -1350,6 +1381,28 @@ export function WhatsappModule({
               <FieldGroup>
                 <FieldLabel htmlFor="tpl-media">Image URL (Optional)</FieldLabel>
                 <TextInput id="tpl-media" placeholder="e.g. https://domain.com/brochure.png" value={tplMediaUrl} onChange={(e) => setTplMediaUrl(e.target.value)} />
+                <div className="mt-2 space-y-1.5">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider font-mono">Or select a pre-designed asset graphic:</span>
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                    {STOCK_ASSETS.map((asset) => (
+                      <button
+                        key={asset.url}
+                        type="button"
+                        onClick={() => setTplMediaUrl(asset.url)}
+                        className={cn(
+                          "relative h-12 rounded-lg overflow-hidden border border-line text-left transition hover:opacity-85 outline-none focus:outline-none",
+                          tplMediaUrl === asset.url ? "ring-2 ring-emerald-500 border-transparent" : "border-line"
+                        )}
+                        title={asset.name}
+                      >
+                        <img src={asset.url} alt={asset.name} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/40 flex items-end p-1">
+                          <span className="text-[8px] font-bold text-white truncate w-full leading-none">{asset.name.split(" ")[1]}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </FieldGroup>
               <FieldGroup>
                 <div className="flex justify-between items-center">
