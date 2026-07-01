@@ -4,14 +4,16 @@ import { getClients } from "@/lib/services/clients";
 import { getLeads } from "@/lib/services/leads";
 import { getProjects } from "@/lib/services/projects";
 import { getSalaries } from "@/lib/services/salaries";
+import { getAttendances } from "@/lib/services/attendance";
 
 export default async function DashboardPage() {
-  const [overview, projects, leads, clients, salaries] = await Promise.all([
+  const [overview, projects, leads, clients, salaries, attendances] = await Promise.all([
     getDashboardOverview(),
     getProjects(),
     getLeads(),
     getClients(),
     getSalaries(),
+    getAttendances(),
   ]);
 
   return (
@@ -21,6 +23,7 @@ export default async function DashboardPage() {
       leads={leads}
       clients={clients}
       salaries={salaries}
+      attendances={attendances}
     />
   );
 }
