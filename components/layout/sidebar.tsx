@@ -23,7 +23,7 @@ import {
   Calendar,
   MessageSquare,
   LogOut,
-  ChevronRight
+  ShieldCheck
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -130,10 +130,10 @@ export function Sidebar({
 
   const getRoleBadgeTone = (role: string) => {
     switch (role) {
-      case "admin": return "bg-purple-900/40 text-purple-200 border-purple-800/40";
-      case "manager": return "bg-amber-900/40 text-amber-200 border-amber-800/40";
-      case "business": return "bg-emerald-900/40 text-emerald-200 border-emerald-800/40";
-      default: return "bg-zinc-800 text-zinc-300 border-zinc-700";
+      case "admin": return "bg-purple-50 text-purple-700 border-purple-200";
+      case "manager": return "bg-amber-50 text-amber-700 border-amber-200";
+      case "business": return "bg-emerald-50 text-emerald-700 border-emerald-200";
+      default: return "bg-zinc-100 text-zinc-650 border-zinc-200";
     }
   };
 
@@ -154,24 +154,24 @@ export function Sidebar({
         onClick={onMobileToggle}
       />
       <aside
-        style={{ backgroundColor: "#0c0f12" }}
+        style={{ backgroundColor: "#ffffff" }}
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex h-screen flex-col border-r border-white/5 text-white/90 px-4 py-6 shadow-2xl lg:sticky lg:top-0 lg:z-20 transition-all duration-300",
+          "fixed inset-y-0 left-0 z-50 flex h-screen flex-col border-r border-line text-zinc-700 px-4 py-6 shadow-sm lg:sticky lg:top-0 lg:z-20 transition-all duration-300",
           collapsed ? "w-[84px]" : "w-[270px]",
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
       >
         {/* Branding header */}
-        <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-5 px-1.5">
+        <div className="flex items-center justify-between gap-3 border-b border-line pb-5 px-1.5">
           <div className={cn("flex items-center gap-2.5 overflow-hidden transition-all duration-200", collapsed && "w-0 opacity-0")}>
             <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-black font-extrabold shadow-md shadow-emerald-500/10">
               P
             </div>
             <div>
-              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.24em] text-white/40 leading-none">
+              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.24em] text-zinc-400 leading-none">
                 Probase Solutions
               </p>
-              <p className="mt-1 text-xs font-semibold tracking-tight text-white/80 leading-none">
+              <p className="mt-1 text-xs font-semibold tracking-tight text-zinc-800 leading-none">
                 {user?.role === "employee" ? "Employee Portal" : user?.role === "business" ? "Business Panel" : "Command Center"}
               </p>
             </div>
@@ -179,7 +179,7 @@ export function Sidebar({
           <button
             type="button"
             onClick={onToggle}
-            className="subtle-ring hidden rounded-xl border border-white/10 bg-white/5 p-2 text-white/60 transition hover:bg-white hover:text-black lg:inline-flex"
+            className="subtle-ring hidden rounded-xl border border-line bg-zinc-50 p-2 text-zinc-400 transition hover:bg-black hover:text-white lg:inline-flex"
           >
             <ChevronLeft className={cn("transition-transform duration-200", collapsed && "rotate-180")} size={14} />
           </button>
@@ -197,7 +197,7 @@ export function Sidebar({
             return (
               <div key={section.title} className="space-y-1.5">
                 {!collapsed && (
-                  <h5 className="px-3 text-[9px] font-bold uppercase tracking-[0.2em] text-white/30 font-mono">
+                  <h5 className="px-3 text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-400 font-mono">
                     {section.title}
                   </h5>
                 )}
@@ -224,13 +224,13 @@ export function Sidebar({
                             className={cn(
                               "w-full relative flex items-center justify-between rounded-[12px] px-3.5 py-2.5 text-xs font-semibold tracking-wide transition-all group duration-200 outline-none focus:outline-none",
                               hasActiveChild
-                                ? "bg-white/10 text-white"
-                                : "text-white/60 hover:bg-white/5 hover:text-white",
+                                ? "bg-zinc-100 text-black font-bold"
+                                : "text-zinc-500 hover:bg-zinc-50 hover:text-black",
                             )}
                             title={collapsed ? item.label : undefined}
                           >
                             <div className="flex items-center gap-3.5">
-                              <Icon size={16} className="text-white/50 group-hover:text-white shrink-0" />
+                              <Icon size={16} className={cn("shrink-0", hasActiveChild ? "text-black" : "text-zinc-400 group-hover:text-black")} />
                               <span className={cn("transition-all duration-200 text-left", collapsed && "hidden w-0 opacity-0")}>
                                 {item.label}
                               </span>
@@ -239,7 +239,7 @@ export function Sidebar({
                               <ChevronDown
                                 size={12}
                                 className={cn(
-                                  "text-white/40 transition-transform duration-200",
+                                  "text-zinc-400 transition-transform duration-200",
                                   isExpanded && "rotate-180"
                                 )}
                               />
@@ -258,13 +258,13 @@ export function Sidebar({
                                     className={cn(
                                       "flex items-center gap-2.5 rounded-[8px] pl-4 py-2.5 text-[11px] font-semibold transition-all duration-150 outline-none focus:outline-none",
                                       childActive
-                                        ? "text-emerald-400 font-bold bg-white/5"
-                                        : "text-white/40 hover:text-white hover:translate-x-1"
+                                        ? "text-emerald-600 font-bold bg-zinc-50"
+                                        : "text-zinc-400 hover:text-black hover:translate-x-1"
                                     )}
                                   >
                                     <span className={cn(
                                       "w-1 h-1 rounded-full shrink-0",
-                                      childActive ? "bg-emerald-400" : "bg-white/20"
+                                      childActive ? "bg-emerald-500" : "bg-zinc-300"
                                     )} />
                                     {child.label}
                                   </Link>
@@ -286,15 +286,15 @@ export function Sidebar({
                         className={cn(
                           "relative flex items-center gap-3.5 rounded-[12px] px-3.5 py-2.5 text-xs font-semibold tracking-wide transition-all group duration-200 outline-none focus:outline-none",
                           active
-                            ? "bg-white/10 text-white shadow-lg font-bold"
-                            : "text-white/60 hover:bg-white/5 hover:text-white hover:translate-x-1.5",
+                            ? "bg-zinc-100 text-black shadow-sm font-bold"
+                            : "text-zinc-500 hover:bg-zinc-50 hover:text-black hover:translate-x-1.5",
                         )}
                         title={collapsed ? item.label : undefined}
                       >
                         {active && (
                           <span className="absolute left-0 top-3.5 bottom-3.5 w-1 rounded-r bg-emerald-500" />
                         )}
-                        <Icon size={16} className={cn("shrink-0", active ? "text-white" : "text-white/50 group-hover:text-white")} />
+                        <Icon size={16} className={cn("shrink-0", active ? "text-black" : "text-zinc-400 group-hover:text-black")} />
                         <span className={cn("transition-all duration-200", collapsed && "hidden w-0 opacity-0")}>
                           {item.label}
                         </span>
@@ -308,10 +308,10 @@ export function Sidebar({
         </nav>
 
         {/* User profile details bottom card */}
-        <div className="border-t border-white/10 pt-4 mt-auto">
+        <div className="border-t border-line pt-4 mt-auto">
           {collapsed ? (
             <div className="flex flex-col items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-xs font-bold text-white/80" title={user?.name}>
+              <div className="w-10 h-10 rounded-xl bg-zinc-50 border border-line flex items-center justify-center text-xs font-bold text-zinc-700" title={user?.name}>
                 {user?.name
                   .split(" ")
                   .map((n) => n[0])
@@ -321,14 +321,14 @@ export function Sidebar({
               </div>
               <button
                 onClick={handleLogout}
-                className="p-2 rounded-xl bg-white/5 hover:bg-red-500/10 hover:text-red-500 text-white/40 transition-colors focus:outline-none"
+                className="p-2 rounded-xl bg-zinc-50 hover:bg-red-50 hover:text-red-600 text-zinc-400 transition-colors focus:outline-none"
                 title="Sign Out"
               >
                 <LogOut size={16} />
               </button>
             </div>
           ) : (
-            <div className="flex items-center justify-between gap-2.5 bg-white/5 border border-white/5 rounded-2xl p-3">
+            <div className="flex items-center justify-between gap-2.5 bg-zinc-50 border border-line rounded-2xl p-3">
               <div className="flex items-center gap-2.5 overflow-hidden">
                 <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-teal-400 to-emerald-400 text-black flex items-center justify-center text-xs font-bold shrink-0">
                   {user?.name
@@ -339,7 +339,7 @@ export function Sidebar({
                     .slice(0, 2)}
                 </div>
                 <div className="overflow-hidden">
-                  <p className="text-[11px] font-bold text-white truncate leading-none">{user?.name}</p>
+                  <p className="text-[11px] font-bold text-zinc-800 truncate leading-none">{user?.name}</p>
                   <div className="mt-1 flex items-center">
                     <span className={cn("text-[9px] font-bold uppercase tracking-wider font-mono border px-1.5 py-0.5 rounded", getRoleBadgeTone(user?.role || ""))}>
                       {user?.role}
@@ -349,7 +349,7 @@ export function Sidebar({
               </div>
               <button
                 onClick={handleLogout}
-                className="p-2 rounded-xl text-white/40 hover:text-red-400 hover:bg-white/5 transition-colors shrink-0 focus:outline-none"
+                className="p-2 rounded-xl text-zinc-400 hover:text-red-600 hover:bg-zinc-100 transition-colors shrink-0 focus:outline-none"
                 title="Sign Out"
               >
                 <LogOut size={14} />
