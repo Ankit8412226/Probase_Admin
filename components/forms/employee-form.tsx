@@ -1,6 +1,7 @@
 "use client";
  
 import { useEffect, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
  
 import { Button } from "@/components/ui/button";
 import {
@@ -36,6 +37,7 @@ export function EmployeeForm({
   isSubmitting: boolean;
 }) {
   const [values, setValues] = useState<EmployeePayload>(defaultValues);
+  const [showPassword, setShowPassword] = useState(false);
  
   useEffect(() => {
     if (initialValues) {
@@ -145,6 +147,7 @@ export function EmployeeForm({
               }
             >
               <option value="">No system login access</option>
+              <option value="employee">Employee</option>
               <option value="business">Business User</option>
               <option value="manager">Manager</option>
               <option value="admin">Administrator</option>
@@ -152,16 +155,27 @@ export function EmployeeForm({
           </FieldGroup>
           <FieldGroup>
             <FieldLabel htmlFor="employee-password">Password</FieldLabel>
-            <TextInput
-              id="employee-password"
-              type="password"
-              value={values.password ?? ""}
-              onChange={(event) =>
-                setValues((current) => ({ ...current, password: event.target.value }))
-              }
-              placeholder={initialValues ? "Leave blank to keep existing" : "Min 8 characters"}
-              required={!initialValues && Boolean(values.loginRole)}
-            />
+            <div className="relative">
+              <TextInput
+                id="employee-password"
+                type={showPassword ? "text" : "password"}
+                value={values.password ?? ""}
+                onChange={(event) =>
+                  setValues((current) => ({ ...current, password: event.target.value }))
+                }
+                placeholder={initialValues ? "Leave blank to keep existing" : "Min 8 characters"}
+                required={!initialValues && Boolean(values.loginRole)}
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-fog hover:text-black transition"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
           </FieldGroup>
         </FormGrid>
       </div>

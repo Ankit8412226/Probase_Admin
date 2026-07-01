@@ -8,7 +8,7 @@ const employeeSchema = new Schema(
     role: { type: String, required: true, trim: true },
     salary: { type: Number, required: true },
     joiningDate: { type: String, required: true },
-    loginRole: { type: String, enum: ["admin", "manager", "business"], required: false },
+    loginRole: { type: String, enum: ["admin", "manager", "business", "employee"], required: false },
     password: { type: String, required: false },
   },
   {
