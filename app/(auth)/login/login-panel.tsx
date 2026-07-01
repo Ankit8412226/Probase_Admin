@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, LockKeyhole, ShieldCheck, Camera, ScanFace, UserCheck, RefreshCw } from "lucide-react";
+import { ArrowRight, LockKeyhole, ShieldCheck, Camera, ScanFace, UserCheck, RefreshCw, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 
@@ -15,6 +15,7 @@ export function LoginPanel() {
   // Standard login fields
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -367,17 +368,29 @@ export function LoginPanel() {
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
                     required
+                    placeholder="Enter your email"
                   />
                 </FieldGroup>
                 <FieldGroup>
                   <FieldLabel htmlFor="login-password">Password</FieldLabel>
-                  <TextInput
-                    id="login-password"
-                    type="password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    required
-                  />
+                  <div className="relative">
+                    <TextInput
+                      id="login-password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      required
+                      placeholder="Enter your password"
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-fog hover:text-black focus:outline-none"
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </FieldGroup>
                 {error ? (
                   <div className="rounded-[16px] border border-line bg-black px-4 py-3 text-sm text-white">
