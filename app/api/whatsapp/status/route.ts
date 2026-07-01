@@ -16,13 +16,18 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get("sessionId") || "default";
 
+    const origin = request.nextUrl.origin;
+
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 6000); // 6 seconds timeout limit
 
       const res = await fetch(`${config.gatewayUrl.replace(/\/$/, "")}/status?sessionId=${sessionId}`, {
         method: "GET",
-        headers: { "Accept": "application/json" },
+        headers: { 
+          "Accept": "application/json",
+          "x-dashboard-url": origin
+        },
         signal: controller.signal,
         next: { revalidate: 0 }
       });

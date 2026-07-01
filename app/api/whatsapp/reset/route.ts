@@ -24,13 +24,18 @@ export async function POST(request: NextRequest) {
 
     const sessionId = querySessionId || bodySessionId || "default";
 
+    const origin = request.nextUrl.origin;
+
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000);
 
       const res = await fetch(`${config.gatewayUrl.replace(/\/$/, "")}/reset`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "x-dashboard-url": origin
+        },
         body: JSON.stringify({ sessionId }),
         signal: controller.signal,
       });

@@ -1,6 +1,8 @@
 import { WhatsappLog, WhatsappConfig } from "@/models/WhatsappLog";
 import WhatsappMessage from "@/models/WhatsappMessage";
 import WhatsappCampaign from "@/models/WhatsappCampaign";
+import WhatsappTemplate from "@/models/WhatsappTemplate";
+import WhatsappRule from "@/models/WhatsappRule";
 import { createId } from "@/lib/utils";
 import { ensureDatabase, mapDocument, useMemoryStore } from "@/lib/services/helpers";
 import { getMemoryStore } from "@/lib/services/store";
@@ -46,6 +48,13 @@ export async function getWhatsappLogs() {
   ) as unknown as WhatsappLogRecord[];
 }
 
+function getAppOrigin() {
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  return "http://localhost:3000";
+}
+
 export async function sendWhatsappAlert(
   recipientName: string,
   phone: string,
@@ -64,7 +73,10 @@ export async function sendWhatsappAlert(
     try {
       const res = await fetch(`${config.gatewayUrl.replace(/\/$/, "")}/send`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "x-dashboard-url": getAppOrigin()
+        },
         body: JSON.stringify({ to: phone, message: text, sessionId, mediaUrl }),
       });
 
@@ -181,4 +193,108 @@ export async function updateCampaign(id: string, payload: Partial<Omit<WhatsappC
   await ensureDatabase();
   const updated = await WhatsappCampaign.findByIdAndUpdate(id, payload, { new: true }).lean();
   return updated ? (mapDocument(updated as any) as unknown as WhatsappCampaignRecord) : null;
+}
+
+// --- Custom Templates Library ---
+
+export async function getWhatsappTemplates() {
+  if (useMemoryStore()) {
+    return getMemoryStore().whatsappTemplates || [];
+  }
+
+  await ensureDatabase();
+  const templates = await WhatsappTemplate.find().sort({ createdAt: -1 }).lean();
+  return templates.map((t) => mapDocument(t as any)) as unknown as import("@/types").WhatsappTemplateRecord[];
+}
+
+export async function createWhatsappTemplate(payload: Omit<import("@/types").WhatsappTemplateRecord, "id" | "createdAt">) {
+  const record: import("@/types").WhatsappTemplateRecord = {
+    id: createId("tpl"),
+    ...payload,
+    createdAt: new Date().toISOString(),
+  };
+
+  if (useMemoryStore()) {
+    const store = getMemoryStore();
+    store.whatsappTemplates = store.whatsappTemplates || [];
+    store.whatsappTemplates.unshift(record);
+    return record;
+  }
+
+  await ensureDatabase();
+  await WhatsappTemplate.create({ _id: record.id, ...record });
+  return record;
+}
+
+export async function deleteWhatsappTemplate(id: string) {
+  if (useMemoryStore()) {
+    const store = getMemoryStore();
+    store.whatsappTemplates = store.whatsappTemplates?.filter((t) => t.id !== id) || [];
+    return true;
+  }
+
+  await ensureDatabase();
+  await WhatsappTemplate.findByIdAndDelete(id);
+  return true;
+}
+
+// --- Chatbot Auto-Responder Rules ---
+
+export async function getWhatsappRules() {
+  if (useMemoryStore()) {
+    return getMemoryStore().whatsappRules || [];
+  }
+
+  await ensureDatabase();
+  const rules = await WhatsappRule.find().sort({ createdAt: -1 }).lean();
+  return rules.map((r) => mapDocument(r as any)) as unknown as import("@/types").WhatsappRuleRecord[];
+}
+
+export async function createWhatsappRule(payload: Omit<import("@/types").WhatsappRuleRecord, "id" | "createdAt" | "isActive">) {
+  const record: import("@/types").WhatsappRuleRecord = {
+    id: createId("rule"),
+    ...payload,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  };
+
+  if (useMemoryStore()) {
+    const store = getMemoryStore();
+    store.whatsappRules = store.whatsappRules || [];
+    store.whatsappRules.unshift(record);
+    return record;
+  }
+
+  await ensureDatabase();
+  await WhatsappRule.create({ _id: record.id, ...record });
+  return record;
+}
+
+export async function updateWhatsappRule(id: string, payload: Partial<Omit<import("@/types").WhatsappRuleRecord, "id">>) {
+  if (useMemoryStore()) {
+    const store = getMemoryStore();
+    store.whatsappRules = store.whatsappRules || [];
+    const idx = store.whatsappRules.findIndex((r) => r.id === id);
+    if (idx >= 0) {
+      store.whatsappRules[idx] = { ...store.whatsappRules[idx], ...payload };
+      return store.whatsappRules[idx];
+    }
+    return null;
+  }
+
+  await ensureDatabase();
+  const updated = await WhatsappRule.findByIdAndUpdate(id, payload, { new: true }).lean();
+  return updated ? (mapDocument(updated as any) as unknown as import("@/types").WhatsappRuleRecord) : null;
+}
+
+export async function deleteWhatsappRule(id: string) {
+  if (useMemoryStore()) {
+    const store = getMemoryStore();
+    store.whatsappRules = store.whatsappRules?.filter((r) => r.id !== id) || [];
+    return true;
+  }
+
+  await ensureDatabase();
+  await WhatsappRule.findByIdAndDelete(id);
+  return true;
 }

@@ -18,7 +18,7 @@ const AUTH_BASE_DIR = ".wa_auth";
 let dashboardUrl = "";
 
 app.use((req, res, next) => {
-  const origin = req.headers.origin || req.headers.referer;
+  const origin = req.headers["x-dashboard-url"] || req.query.dashboardUrl || req.headers.origin || req.headers.referer;
   if (origin && !origin.includes("localhost:3001") && origin.startsWith("http")) {
     // Clean trailing slash
     dashboardUrl = origin.replace(/\/$/, "");

@@ -217,6 +217,8 @@ export interface SeedPayload {
   whatsappLogs?: WhatsappLogRecord[];
   whatsappMessages?: WhatsappMessageRecord[];
   whatsappCampaigns?: WhatsappCampaignRecord[];
+  whatsappTemplates?: WhatsappTemplateRecord[];
+  whatsappRules?: WhatsappRuleRecord[];
 }
 
 export interface WhatsappLogRecord {
@@ -297,4 +299,21 @@ export interface WhatsappCampaignRecord {
   totalCount: number;
   createdAt: string;
   customContacts?: Array<{ name: string; phone: string; company?: string }>;
+}
+
+export interface WhatsappTemplateRecord {
+  id: string;
+  name: string;
+  templateText: string;
+  mediaUrl?: string;
+  createdAt: string;
+}
+
+export interface WhatsappRuleRecord {
+  id: string;
+  keyword: string;
+  replyText: string;
+  mediaUrl?: string;
+  isActive: boolean;
+  createdAt: string;
 }

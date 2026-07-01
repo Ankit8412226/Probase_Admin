@@ -24,6 +24,12 @@ export function getMemoryStore() {
   if (!global.probaseStore.whatsappCampaigns) {
     global.probaseStore.whatsappCampaigns = [];
   }
+  if (!global.probaseStore.whatsappTemplates) {
+    global.probaseStore.whatsappTemplates = [];
+  }
+  if (!global.probaseStore.whatsappRules) {
+    global.probaseStore.whatsappRules = [];
+  }
 
   return global.probaseStore;
 }

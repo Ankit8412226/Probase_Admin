@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { MessageSquare, Settings, Zap, History, RefreshCw, QrCode, Wifi, AlertTriangle, Send, Megaphone, Inbox, Upload, Plus, Sparkles } from "lucide-react";
+import { MessageSquare, Settings, Zap, History, RefreshCw, QrCode, Wifi, AlertTriangle, Send, Megaphone, Inbox, Upload, Plus, Sparkles, Bot, Trash, Trash2, FolderHeart, CheckSquare, XSquare } from "lucide-react";
 import { DataTable } from "@/components/tables/data-table";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
@@ -11,20 +11,10 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FieldGroup, FieldLabel, TextInput, TextArea, SelectInput } from "@/components/forms/form-primitives";
 import { Modal } from "@/components/ui/modal";
 import { formatDate } from "@/lib/utils";
-import type { WhatsappLogRecord, WhatsappMessageRecord, WhatsappCampaignRecord } from "@/types";
+import type { WhatsappLogRecord, WhatsappMessageRecord, WhatsappCampaignRecord, WhatsappTemplateRecord, WhatsappRuleRecord } from "@/types";
 
-// Presets templates
+// Static presets templates
 const PRESETS = [
-  {
-    name: "Select Preset Template...",
-    templateText: "",
-    mediaUrl: ""
-  },
-  {
-    name: "🪔 Festive Greeting & Promotion",
-    templateText: "🪔 *Happy Diwali {{name}}!*\n\nWe are offering a *20% early discount* on all Next.js web application designs for *{{company}}* this festive season.\n\nReply to book a free consultancy call today!\n\nBest Regards,\nProbase Team",
-    mediaUrl: "https://images.unsplash.com/photo-1605282490895-d2279c6d3283?q=80&w=600"
-  },
   {
     name: "🚀 Product Launch Pitch",
     templateText: "🚀 *Hi {{name}}!*\n\nWe just launched our new *AI-Powered CRM and Billing cockpit*. As a valued partner of *{{company}}*, we invite you to try our private beta for free!\n\nCheck out the dashboard screenshot and reply to set up your account.",
@@ -44,7 +34,7 @@ export function WhatsappModule({
   initialLogs: WhatsappLogRecord[];
   initialConfig: { gatewayUrl: string };
 }) {
-  const [activeTab, setActiveTab] = useState<"status" | "inbox" | "campaigns">("status");
+  const [activeTab, setActiveTab] = useState<"status" | "inbox" | "campaigns" | "templates" | "rules">("status");
   const [logs, setLogs] = useState<WhatsappLogRecord[]>(initialLogs);
   const [gatewayUrl, setGatewayUrl] = useState(initialConfig.gatewayUrl || "");
   const [isConnected, setIsConnected] = useState(false);
@@ -77,6 +67,24 @@ export function WhatsappModule({
   const [showCampaignModal, setShowCampaignModal] = useState(false);
   const [isCreatingCampaign, setIsCreatingCampaign] = useState(false);
 
+  // Custom Templates states
+  const [customTemplates, setCustomTemplates] = useState<WhatsappTemplateRecord[]>([]);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+  const [tplName, setTplName] = useState("");
+  const [tplText, setTplText] = useState("");
+  const [tplMediaUrl, setTplMediaUrl] = useState("");
+
+  // Chatbot Auto-Responder Rules states
+  const [rules, setRules] = useState<WhatsappRuleRecord[]>([]);
+  const [isLoadingRules, setIsLoadingRules] = useState(false);
+  const [showRuleModal, setShowRuleModal] = useState(false);
+  const [isSavingRule, setIsSavingRule] = useState(false);
+  const [ruleKeyword, setRuleKeyword] = useState("");
+  const [ruleReply, setRuleReply] = useState("");
+  const [ruleMediaUrl, setRuleMediaUrl] = useState("");
+
   // New Campaign Form Fields
   const [campName, setCampName] = useState("");
   const [campTargetType, setCampTargetType] = useState<"Leads" | "Clients" | "Custom">("Leads");
@@ -104,8 +112,13 @@ export function WhatsappModule({
       loadInbox();
     } else if (activeTab === "campaigns") {
       loadCampaigns();
-      const campaignPoller = setInterval(loadCampaigns, 5000); // Poll campaigns progress
+      loadTemplates(); // Load templates to use as presets
+      const campaignPoller = setInterval(loadCampaigns, 5000);
       return () => clearInterval(campaignPoller);
+    } else if (activeTab === "templates") {
+      loadTemplates();
+    } else if (activeTab === "rules") {
+      loadRules();
     }
   }, [activeTab]);
 
@@ -190,6 +203,38 @@ export function WhatsappModule({
       console.error(e);
     } finally {
       setIsLoadingCampaigns(false);
+    }
+  };
+
+  // Fetch custom templates
+  const loadTemplates = async () => {
+    setIsLoadingTemplates(true);
+    try {
+      const res = await fetch("/api/whatsapp/templates");
+      const result = await res.json();
+      if (res.ok && result.success) {
+        setCustomTemplates(result.data);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoadingTemplates(false);
+    }
+  };
+
+  // Fetch chatbot auto-responder rules
+  const loadRules = async () => {
+    setIsLoadingRules(true);
+    try {
+      const res = await fetch("/api/whatsapp/rules");
+      const result = await res.json();
+      if (res.ok && result.success) {
+        setRules(result.data);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoadingRules(false);
     }
   };
 
@@ -426,15 +471,92 @@ export function WhatsappModule({
     }
   };
 
-  // Helper to format mockup template preview text
-  const getMockPreviewText = (text: string) => {
-    if (!text) return "";
-    let formatted = text
-      .replace(/\{\{name\}\}/gi, "John Doe")
-      .replace(/\{\{company\}\}/gi, "Acme Corp");
-    
-    // Replace *bold* with JSX elements or basic bold markup
-    return formatted;
+  // Create Template
+  const handleCreateTemplate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!tplName || !tplText) return;
+
+    setIsSavingTemplate(true);
+    try {
+      const res = await fetch("/api/whatsapp/templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: tplName, templateText: tplText, mediaUrl: tplMediaUrl }),
+      });
+      if (res.ok) {
+        setShowTemplateModal(false);
+        setTplName("");
+        setTplText("");
+        setTplMediaUrl("");
+        loadTemplates();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSavingTemplate(false);
+    }
+  };
+
+  // Delete Template
+  const handleDeleteTemplate = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this template?")) return;
+    try {
+      await fetch(`/api/whatsapp/templates/${id}`, { method: "DELETE" });
+      loadTemplates();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Create Auto-responder Rule
+  const handleCreateRule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ruleKeyword || !ruleReply) return;
+
+    setIsSavingRule(true);
+    try {
+      const res = await fetch("/api/whatsapp/rules", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keyword: ruleKeyword, replyText: ruleReply, mediaUrl: ruleMediaUrl }),
+      });
+      if (res.ok) {
+        setShowRuleModal(false);
+        setRuleKeyword("");
+        setRuleReply("");
+        setRuleMediaUrl("");
+        loadRules();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSavingRule(false);
+    }
+  };
+
+  // Toggle Rule Status
+  const handleToggleRule = async (rule: WhatsappRuleRecord) => {
+    try {
+      await fetch(`/api/whatsapp/rules/${rule.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !rule.isActive }),
+      });
+      loadRules();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Delete Rule
+  const handleDeleteRule = async (id: string) => {
+    if (!window.confirm("Delete this chatbot trigger rule?")) return;
+    try {
+      await fetch(`/api/whatsapp/rules/${id}`, { method: "DELETE" });
+      loadRules();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -442,14 +564,14 @@ export function WhatsappModule({
       <PageHeader
         eyebrow="Integrations"
         title="WhatsApp Control Center"
-        description="Launch marketing broadcast campaigns, connect your business number, and review incoming user replies."
+        description="Launch marketing broadcast campaigns, connect your business number, configure auto-responder rules, and review replies."
       />
 
       {/* Tabs Menu Navigation */}
-      <div className="flex border-b border-line gap-4">
+      <div className="flex border-b border-line gap-4 overflow-x-auto pb-1">
         <button
           onClick={() => setActiveTab("status")}
-          className={`pb-3 text-sm font-semibold tracking-tight transition-all border-b-2 px-1 ${
+          className={`pb-3 text-sm font-semibold tracking-tight transition-all border-b-2 px-1 whitespace-nowrap ${
             activeTab === "status"
               ? "border-black text-black"
               : "border-transparent text-fog hover:text-black"
@@ -462,7 +584,7 @@ export function WhatsappModule({
         </button>
         <button
           onClick={() => setActiveTab("inbox")}
-          className={`pb-3 text-sm font-semibold tracking-tight transition-all border-b-2 px-1 ${
+          className={`pb-3 text-sm font-semibold tracking-tight transition-all border-b-2 px-1 whitespace-nowrap ${
             activeTab === "inbox"
               ? "border-black text-black"
               : "border-transparent text-fog hover:text-black"
@@ -475,7 +597,7 @@ export function WhatsappModule({
         </button>
         <button
           onClick={() => setActiveTab("campaigns")}
-          className={`pb-3 text-sm font-semibold tracking-tight transition-all border-b-2 px-1 ${
+          className={`pb-3 text-sm font-semibold tracking-tight transition-all border-b-2 px-1 whitespace-nowrap ${
             activeTab === "campaigns"
               ? "border-black text-black"
               : "border-transparent text-fog hover:text-black"
@@ -483,7 +605,33 @@ export function WhatsappModule({
         >
           <div className="flex items-center gap-1.5">
             <Megaphone size={15} />
-            Marketing Campaigns
+            Broadcast Campaigns
+          </div>
+        </button>
+        <button
+          onClick={() => setActiveTab("templates")}
+          className={`pb-3 text-sm font-semibold tracking-tight transition-all border-b-2 px-1 whitespace-nowrap ${
+            activeTab === "templates"
+              ? "border-black text-black"
+              : "border-transparent text-fog hover:text-black"
+          }`}
+        >
+          <div className="flex items-center gap-1.5">
+            <FolderHeart size={15} />
+            Templates Library
+          </div>
+        </button>
+        <button
+          onClick={() => setActiveTab("rules")}
+          className={`pb-3 text-sm font-semibold tracking-tight transition-all border-b-2 px-1 whitespace-nowrap ${
+            activeTab === "rules"
+              ? "border-black text-black"
+              : "border-transparent text-fog hover:text-black"
+          }`}
+        >
+          <div className="flex items-center gap-1.5">
+            <Bot size={15} />
+            Chatbot Auto-Responder
           </div>
         </button>
       </div>
@@ -1029,24 +1177,46 @@ export function WhatsappModule({
                   />
                 </FieldGroup>
 
-                {/* Presets template selector */}
+                {/* Presets template selector (Combining static and database custom templates!) */}
                 <FieldGroup>
                   <FieldLabel htmlFor="camp-preset">Or load template preset</FieldLabel>
                   <SelectInput
                     id="camp-preset"
                     onChange={(e) => {
-                      const idx = Number(e.target.value);
-                      if (idx > 0) {
-                        setCampTemplate(PRESETS[idx].templateText);
-                        setCampMediaUrl(PRESETS[idx].mediaUrl);
+                      const val = e.target.value;
+                      if (val.startsWith("db_")) {
+                        const tplId = val.replace("db_", "");
+                        const found = customTemplates.find(t => t.id === tplId);
+                        if (found) {
+                          setCampTemplate(found.templateText);
+                          setCampMediaUrl(found.mediaUrl || "");
+                        }
+                      } else {
+                        const idx = Number(val);
+                        if (idx >= 0) {
+                          setCampTemplate(PRESETS[idx].templateText);
+                          setCampMediaUrl(PRESETS[idx].mediaUrl);
+                        }
                       }
                     }}
                   >
-                    {PRESETS.map((preset, i) => (
-                      <option key={i} value={i}>
-                        {preset.name}
-                      </option>
-                    ))}
+                    <option value="-1">Select preset...</option>
+                    <optgroup label="System Defaults">
+                      {PRESETS.map((preset, i) => (
+                        <option key={i} value={i}>
+                          {preset.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                    {customTemplates.length > 0 && (
+                      <optgroup label="My Templates Library">
+                        {customTemplates.map((t) => (
+                          <option key={t.id} value={`db_${t.id}`}>
+                            {t.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
                   </SelectInput>
                 </FieldGroup>
 
@@ -1094,7 +1264,6 @@ export function WhatsappModule({
                       </div>
                     )}
                     
-                    {/* Dynamic text caption body parsing bold tags */}
                     <p className="whitespace-pre-wrap leading-relaxed text-[11px]">
                       {campTemplate 
                         ? campTemplate.replace(/\{\{name\}\}/gi, "John Doe").replace(/\{\{company\}\}/gi, "Acme Corp")
@@ -1106,6 +1275,190 @@ export function WhatsappModule({
                 </div>
               </div>
             </div>
+          </Modal>
+        </div>
+      )}
+
+      {/* 4. Templates Tab Content */}
+      {activeTab === "templates" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="text-sm font-bold text-black uppercase tracking-wider font-mono">My Custom Templates Library</h4>
+              <p className="text-xs text-fog mt-1">Add, edit, or delete reusable campaign templates.</p>
+            </div>
+            <Button onClick={() => setShowTemplateModal(true)}>
+              <FolderHeart size={14} className="mr-1.5" />
+              Save New Template
+            </Button>
+          </div>
+
+          {customTemplates.length > 0 ? (
+            <DataTable
+              data={customTemplates}
+              emptyMessage="No custom templates found."
+              columns={[
+                {
+                  key: "name",
+                  header: "Template Name",
+                  render: (t) => <p className="font-bold text-black">{t.name}</p>,
+                },
+                {
+                  key: "templateText",
+                  header: "Template Content",
+                  render: (t) => (
+                    <div className="max-w-[400px]">
+                      <p className="text-xs text-black whitespace-pre-wrap">{t.templateText}</p>
+                    </div>
+                  ),
+                },
+                {
+                  key: "media",
+                  header: "Attachment URL",
+                  render: (t) => (
+                    <p className="text-xs text-fog max-w-[180px] truncate" title={t.mediaUrl}>
+                      {t.mediaUrl || "None"}
+                    </p>
+                  ),
+                },
+                {
+                  key: "actions",
+                  header: "Actions",
+                  render: (t) => (
+                    <Button variant="secondary" className="text-red-600 hover:bg-red-50 h-8 px-2" onClick={() => handleDeleteTemplate(t.id)}>
+                      <Trash2 size={13} />
+                    </Button>
+                  ),
+                },
+              ]}
+            />
+          ) : (
+            <EmptyState
+              title="No templates saved yet"
+              description="Save your own text and media templates to access them quickly inside campaign workflows."
+            />
+          )}
+
+          {/* New Template Modal */}
+          <Modal open={showTemplateModal} onClose={() => setShowTemplateModal(false)} title="Save Custom Template">
+            <form onSubmit={handleCreateTemplate} className="space-y-4">
+              <FieldGroup>
+                <FieldLabel htmlFor="tpl-name">Template Name</FieldLabel>
+                <TextInput id="tpl-name" placeholder="e.g. Sales Followup Pitch" value={tplName} onChange={(e) => setTplName(e.target.value)} required />
+              </FieldGroup>
+              <FieldGroup>
+                <FieldLabel htmlFor="tpl-media">Image URL (Optional)</FieldLabel>
+                <TextInput id="tpl-media" placeholder="e.g. https://domain.com/brochure.png" value={tplMediaUrl} onChange={(e) => setTplMediaUrl(e.target.value)} />
+              </FieldGroup>
+              <FieldGroup>
+                <div className="flex justify-between items-center">
+                  <FieldLabel htmlFor="tpl-text">Template Content</FieldLabel>
+                  <div className="flex gap-1">
+                    <button type="button" onClick={() => setTplText(prev => prev + " {{name}}")} className="text-[9px] bg-mist border border-line rounded px-1.5 py-0.5 hover:bg-line font-mono">+ Name</button>
+                    <button type="button" onClick={() => setTplText(prev => prev + " {{company}}")} className="text-[9px] bg-mist border border-line rounded px-1.5 py-0.5 hover:bg-line font-mono">+ Company</button>
+                  </div>
+                </div>
+                <TextArea id="tpl-text" placeholder="Design your templates here..." value={tplText} onChange={(e) => setTplText(e.target.value)} required />
+              </FieldGroup>
+              <div className="flex justify-end gap-3 pt-4 border-t border-line">
+                <Button variant="secondary" type="button" onClick={() => setShowTemplateModal(false)}>Cancel</Button>
+                <Button type="submit" disabled={isSavingTemplate}>{isSavingTemplate ? "Saving..." : "Save Template"}</Button>
+              </div>
+            </form>
+          </Modal>
+        </div>
+      )}
+
+      {/* 5. Rules Tab Content */}
+      {activeTab === "rules" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="text-sm font-bold text-black uppercase tracking-wider font-mono">Chatbot Auto-Responder Triggers</h4>
+              <p className="text-xs text-fog mt-1">Configure keyword matcher triggers. Incoming replies matching keywords will get auto-replies instantly.</p>
+            </div>
+            <Button onClick={() => setShowRuleModal(true)}>
+              <Bot size={14} className="mr-1.5" />
+              Add Responder Rule
+            </Button>
+          </div>
+
+          {rules.length > 0 ? (
+            <DataTable
+              data={rules}
+              emptyMessage="No responder rules found."
+              columns={[
+                {
+                  key: "keyword",
+                  header: "Trigger Keyword",
+                  render: (r) => (
+                    <Badge tone="neutral">
+                      {r.keyword.toUpperCase()}
+                    </Badge>
+                  ),
+                },
+                {
+                  key: "reply",
+                  header: "Automated Reply Content",
+                  render: (r) => (
+                    <div className="max-w-[350px]">
+                      <p className="text-xs text-black whitespace-pre-wrap">{r.replyText}</p>
+                      {r.mediaUrl && (
+                        <p className="text-[9px] text-emerald-600 font-semibold mt-1">Image Attachment: {r.mediaUrl}</p>
+                      )}
+                    </div>
+                  ),
+                },
+                {
+                  key: "status",
+                  header: "Status",
+                  render: (r) => (
+                    <button onClick={() => handleToggleRule(r)} className="flex items-center gap-1 hover:opacity-85">
+                      <Badge tone={r.isActive ? "success" : "danger"}>
+                        {r.isActive ? "Active" : "Disabled"}
+                      </Badge>
+                    </button>
+                  ),
+                },
+                {
+                  key: "actions",
+                  header: "Actions",
+                  render: (r) => (
+                    <Button variant="secondary" className="text-red-600 hover:bg-red-50 h-8 px-2" onClick={() => handleDeleteRule(r.id)}>
+                      <Trash2 size={13} />
+                    </Button>
+                  ),
+                },
+              ]}
+            />
+          ) : (
+            <EmptyState
+              title="No responder rules active"
+              description="Create a keyword trigger (like 'pricing' or 'brochure') to automate client messages instantly."
+            />
+          )}
+
+          {/* New Rule Modal */}
+          <Modal open={showRuleModal} onClose={() => setShowRuleModal(false)} title="Add Auto-Responder Rule">
+            <form onSubmit={handleCreateRule} className="space-y-4">
+              <FieldGroup>
+                <FieldLabel htmlFor="rule-key">Trigger Keyword</FieldLabel>
+                <TextInput id="rule-key" placeholder="e.g. pricing" value={ruleKeyword} onChange={(e) => setRuleKeyword(e.target.value)} required />
+                <p className="text-[9px] text-fog">Triggered whenever incoming text contains this word (case-insensitive).</p>
+              </FieldGroup>
+              <FieldGroup>
+                <FieldLabel htmlFor="rule-media">Image URL Attachment (Optional)</FieldLabel>
+                <TextInput id="rule-media" placeholder="e.g. https://domain.com/menu-card.png" value={ruleMediaUrl} onChange={(e) => setRuleMediaUrl(e.target.value)} />
+              </FieldGroup>
+              <FieldGroup>
+                <FieldLabel htmlFor="rule-reply">Automated Reply Message</FieldLabel>
+                <TextArea id="rule-reply" placeholder="Type automated chatbot response..." value={ruleReply} onChange={(e) => setRuleReply(e.target.value)} required />
+              </FieldGroup>
+              <div className="flex justify-end gap-3 pt-4 border-t border-line">
+                <Button variant="secondary" type="button" onClick={() => setShowRuleModal(false)}>Cancel</Button>
+                <Button type="submit" disabled={isSavingRule}>{isSavingRule ? "Saving..." : "Add Rule"}</Button>
+              </div>
+            </form>
           </Modal>
         </div>
       )}
