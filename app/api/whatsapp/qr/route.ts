@@ -14,11 +14,17 @@ export async function GET(request: NextRequest) {
     }
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000); // 6 seconds timeout limit
+
       const res = await fetch(`${config.gatewayUrl.replace(/\/$/, "")}/qr`, {
         method: "GET",
         headers: { "Accept": "application/json" },
+        signal: controller.signal,
         next: { revalidate: 0 } // Disable caching
       });
+
+      clearTimeout(timeoutId);
 
       if (!res.ok) {
         throw new Error(`Gateway returned status ${res.status}`);
