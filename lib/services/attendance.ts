@@ -6,6 +6,8 @@ import { ensureDatabase, mapDocument, useMemoryStore } from "@/lib/services/help
 import { getMemoryStore } from "@/lib/services/store";
 import type { AttendanceRecord } from "@/types";
 
+import { getShifts } from "@/lib/services/shifts";
+
 export async function getAttendances() {
   if (useMemoryStore()) {
     return [...(getMemoryStore().attendances || [])].sort((a, b) => b.loginTime.localeCompare(a.loginTime));
@@ -26,10 +28,29 @@ export async function markAttendance(
   const dateStr = now.toISOString().split("T")[0]; // YYYY-MM-DD
   const loginTimeStr = now.toISOString();
 
-  // Determine status: Late if check-in is after 10:00 AM
-  const hours = now.getHours();
-  const minutes = now.getMinutes();
-  const status = hours > 10 || (hours === 10 && minutes > 0) ? "Late" : "Present";
+  // Determine status: check user's assigned shift start time
+  let status: "Present" | "Late" = "Present";
+  try {
+    const shifts = await getShifts();
+    const userShift = shifts.find((s) => s.assignedEmployeeIds.includes(userId));
+    
+    if (userShift) {
+      const [shours, sminutes] = userShift.startTime.split(":").map(Number);
+      // Late threshold: 15 minutes after shift start time
+      const shiftStartTimeLimit = shours * 60 + sminutes + 15;
+      const currentMinutesToday = now.getHours() * 60 + now.getMinutes();
+      status = currentMinutesToday > shiftStartTimeLimit ? "Late" : "Present";
+    } else {
+      // Default fallback: Late if after 10:00 AM
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      status = hours > 10 || (hours === 10 && minutes > 0) ? "Late" : "Present";
+    }
+  } catch (err) {
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    status = hours > 10 || (hours === 10 && minutes > 0) ? "Late" : "Present";
+  }
 
   // Check if already checked in today
   if (useMemoryStore()) {

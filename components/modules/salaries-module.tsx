@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Pencil, Plus, Search, Trash2, Zap } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { SalaryForm } from "@/components/forms/salary-form";
 import { DataTable } from "@/components/tables/data-table";
@@ -12,21 +13,24 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ExportMenu } from "@/components/ui/export-menu";
-import { SelectInput, TextInput } from "@/components/forms/form-primitives";
+import { SelectInput, TextInput, FieldGroup, FieldLabel } from "@/components/forms/form-primitives";
 import { useAuth } from "@/hooks/use-auth";
 import { useDisclosure } from "@/hooks/use-disclosure";
 import { useEntityManager } from "@/hooks/use-entity-manager";
 import { formatCurrency, formatDate, formatMonth } from "@/lib/utils";
-import type { EmployeeRecord, SalaryRecord } from "@/types";
+import type { EmployeeRecord, SalaryRecord, AttendanceRecord } from "@/types";
 
 export function SalariesModule({
   initialSalaries,
   employees,
+  attendances,
 }: {
   initialSalaries: SalaryRecord[];
   employees: EmployeeRecord[];
+  attendances: AttendanceRecord[];
 }) {
   const { user } = useAuth();
+  const router = useRouter();
   const { items, isSubmitting, error, clearError, createItem, updateItem, deleteItem } =
     useEntityManager<SalaryRecord, Omit<SalaryRecord, "id" | "createdAt" | "updatedAt">>({
       endpoint: "/api/salaries",
@@ -36,6 +40,14 @@ export function SalariesModule({
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [editingSalary, setEditingSalary] = useState<SalaryRecord | null>(null);
+ 
+  // Automated Payroll states
+  const [isPayrollOpen, setIsPayrollOpen] = useState(false);
+  const [payrollMonth, setPayrollMonth] = useState(() => new Date().toISOString().slice(0, 7));
+  const [latePenalty, setLatePenalty] = useState(500);
+  const [isRunningPayroll, setIsRunningPayroll] = useState(false);
+  const [payrollSuccess, setPayrollSuccess] = useState("");
+  const [payrollError, setPayrollError] = useState("");
 
   const canManage = user?.role === "admin";
   const filteredSalaries = items.filter((salary) => {
@@ -103,16 +115,30 @@ export function SalariesModule({
               jsonData={filteredSalaries}
             />
             {canManage ? (
-              <Button
-                onClick={() => {
-                  clearError();
-                  setEditingSalary(null);
-                  dialog.open();
-                }}
-              >
-                <Plus size={16} />
-                Add Salary Record
-              </Button>
+              <>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    clearError();
+                    setPayrollSuccess("");
+                    setPayrollError("");
+                    setIsPayrollOpen(true);
+                  }}
+                >
+                  <Zap size={16} className="text-amber-500 fill-amber-500" />
+                  Run Payroll
+                </Button>
+                <Button
+                  onClick={() => {
+                    clearError();
+                    setEditingSalary(null);
+                    dialog.open();
+                  }}
+                >
+                  <Plus size={16} />
+                  Add Record
+                </Button>
+              </>
             ) : null}
           </>
         }
@@ -254,6 +280,156 @@ export function SalariesModule({
           }}
           onSubmit={handleSubmit}
         />
+      </Modal>
+ 
+      {/* Automated Payroll Wizard Modal */}
+      <Modal
+        open={isPayrollOpen}
+        onClose={() => setIsPayrollOpen(false)}
+        title="Automated Payroll Run"
+        description="Calculate payouts automatically by applying penalty rules to attendance logs."
+      >
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <FieldGroup>
+              <FieldLabel htmlFor="payroll-month">Target Month</FieldLabel>
+              <TextInput
+                id="payroll-month"
+                type="month"
+                value={payrollMonth}
+                onChange={(e) => {
+                  setPayrollSuccess("");
+                  setPayrollMonth(e.target.value);
+                }}
+              />
+            </FieldGroup>
+            <FieldGroup>
+              <FieldLabel htmlFor="payroll-penalty">Late Penalty (per day)</FieldLabel>
+              <TextInput
+                id="payroll-penalty"
+                type="number"
+                min="0"
+                value={latePenalty}
+                onChange={(e) => {
+                  setPayrollSuccess("");
+                  setLatePenalty(Number(e.target.value));
+                }}
+              />
+            </FieldGroup>
+          </div>
+ 
+          {/* Payroll Run Preview Table */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-semibold text-black uppercase tracking-wider font-mono">Calculated Payout Review</h4>
+            <div className="max-h-[220px] overflow-y-auto border border-line rounded-[16px] bg-mist/20 p-2">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-line pb-2 text-fog">
+                    <th className="py-2 pl-2">Employee</th>
+                    <th className="py-2">Base Pay</th>
+                    <th className="py-2 text-center">Late Days</th>
+                    <th className="py-2">Penalty</th>
+                    <th className="py-2 pr-2 text-right">Net Salary</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line/45">
+                  {employees.map((emp) => {
+                    const isAlreadyRun = items.some(
+                      (s) => s.employeeId === emp.id && s.month === payrollMonth
+                    );
+                    const empLogs = attendances.filter(
+                      (a) => a.userId === emp.id && a.date.startsWith(payrollMonth)
+                    );
+                    const lateCount = empLogs.filter((a) => a.status === "Late").length;
+                    const deductions = lateCount * latePenalty;
+                    const netSalary = Math.max(0, emp.salary - deductions);
+ 
+                    return (
+                      <tr key={emp.id} className="hover:bg-mist/35 transition">
+                        <td className="py-2 pl-2">
+                          <p className="font-semibold text-black">{emp.name}</p>
+                          <p className="text-[10px] text-fog">{emp.role}</p>
+                        </td>
+                        <td className="py-2 font-mono">{formatCurrency(emp.salary)}</td>
+                        <td className="py-2 text-center font-mono">{lateCount}</td>
+                        <td className="py-2 font-mono text-red-600">-{formatCurrency(deductions)}</td>
+                        <td className="py-2 pr-2 text-right font-mono font-bold">
+                          {isAlreadyRun ? (
+                            <span className="text-fog line-through">{formatCurrency(netSalary)}</span>
+                          ) : (
+                            formatCurrency(netSalary)
+                          )}
+                          <div className="mt-0.5">
+                            {isAlreadyRun ? (
+                              <Badge tone="neutral">Generated</Badge>
+                            ) : (
+                              <Badge tone="success">Ready</Badge>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+ 
+          {payrollSuccess && (
+            <div className="rounded-[16px] border border-emerald-100 bg-emerald-50 text-emerald-800 px-4 py-3 text-xs font-semibold">
+              {payrollSuccess}
+            </div>
+          )}
+ 
+          {payrollError && (
+            <div className="rounded-[16px] border border-red-100 bg-red-50 text-red-800 px-4 py-3 text-xs font-semibold">
+              {payrollError}
+            </div>
+          )}
+ 
+          <div className="flex justify-end gap-3 border-t border-line pt-4">
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={() => setIsPayrollOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={isRunningPayroll}
+              onClick={async () => {
+                setIsRunningPayroll(true);
+                setPayrollSuccess("");
+                setPayrollError("");
+                try {
+                  const res = await fetch("/api/payroll/run", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ month: payrollMonth, lateDeduction: latePenalty }),
+                  });
+                  const result = await res.json();
+                  if (res.ok && result.success) {
+                    setPayrollSuccess(result.data.message);
+                    setTimeout(() => {
+                      setIsPayrollOpen(false);
+                      router.refresh();
+                    }, 1500);
+                  } else {
+                    setPayrollError(result.message || "Failed to execute payroll run");
+                  }
+                } catch (e) {
+                  setPayrollError("Network request failed.");
+                } finally {
+                  setIsRunningPayroll(false);
+                }
+              }}
+            >
+              <Zap size={14} className="fill-white" />
+              {isRunningPayroll ? "Processing..." : "Generate Payouts"}
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

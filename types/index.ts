@@ -212,6 +212,17 @@ export interface SeedPayload {
   targets: TargetRecord[];
   knowledge?: KnowledgeBaseRecord[];
   attendances?: AttendanceRecord[];
+  shifts?: ShiftRecord[];
+}
+
+export interface ShiftRecord {
+  id: string;
+  name: string;
+  startTime: string;
+  endTime: string;
+  assignedEmployeeIds: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AttendanceRecord {

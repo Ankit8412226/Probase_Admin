@@ -12,6 +12,9 @@ export function getMemoryStore() {
   if (!global.probaseStore.attendances) {
     global.probaseStore.attendances = [];
   }
+  if (!global.probaseStore.shifts) {
+    global.probaseStore.shifts = [];
+  }
 
   return global.probaseStore;
 }
