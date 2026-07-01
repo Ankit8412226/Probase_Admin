@@ -30,11 +30,17 @@ const PRESETS = [
 export function WhatsappModule({
   initialLogs,
   initialConfig,
+  defaultTab = "status",
 }: {
   initialLogs: WhatsappLogRecord[];
   initialConfig: { gatewayUrl: string };
+  defaultTab?: "status" | "inbox" | "campaigns" | "templates" | "rules";
 }) {
-  const [activeTab, setActiveTab] = useState<"status" | "inbox" | "campaigns" | "templates" | "rules">("status");
+  const [activeTab, setActiveTab] = useState<"status" | "inbox" | "campaigns" | "templates" | "rules">(defaultTab);
+
+  useEffect(() => {
+    setActiveTab(defaultTab);
+  }, [defaultTab]);
   const [logs, setLogs] = useState<WhatsappLogRecord[]>(initialLogs);
   const [gatewayUrl, setGatewayUrl] = useState(initialConfig.gatewayUrl || "");
   const [isConnected, setIsConnected] = useState(false);
@@ -348,7 +354,7 @@ export function WhatsappModule({
 
       try {
         const lines = text.split("\n");
-        const parsed: Array<{ name: string; phone: string; company?: string }> = [];
+        const parsed: Array<{ name: string; phone: string; company?: string; var1?: string; var2?: string; var3?: string }> = [];
         
         for (let i = 0; i < lines.length; i++) {
           const line = lines[i].trim();
@@ -359,18 +365,21 @@ export function WhatsappModule({
             const name = parts[0];
             const phone = parts[1];
             const company = parts[2] || "";
+            const var1 = parts[3] || "";
+            const var2 = parts[4] || "";
+            const var3 = parts[5] || "";
             
             if (phone.length >= 8) {
-              parsed.push({ name, phone, company });
+              parsed.push({ name, phone, company, var1, var2, var3 });
             }
           }
         }
         
         if (parsed.length > 0) {
           setCustomList(parsed);
-          setCsvSuccessMsg(`Loaded ${parsed.length} contacts from CSV!`);
+          setCsvSuccessMsg(`Loaded ${parsed.length} contacts with variables from CSV!`);
         } else {
-          setCsvErrorMsg("No valid rows found. Ensure format is: Name,Phone,Company");
+          setCsvErrorMsg("No valid rows found. Ensure format is: Name,Phone,Company,Var1,Var2,Var3");
         }
       } catch (err) {
         setCsvErrorMsg("Failed to read CSV. Verify format.");
@@ -388,7 +397,7 @@ export function WhatsappModule({
 
     try {
       const lines = manualText.split("\n");
-      const parsed: Array<{ name: string; phone: string; company?: string }> = [];
+      const parsed: Array<{ name: string; phone: string; company?: string; var1?: string; var2?: string; var3?: string }> = [];
 
       for (const line of lines) {
         const trimmed = line.trim();
@@ -399,17 +408,20 @@ export function WhatsappModule({
           const name = parts[0];
           const phone = parts[1];
           const company = parts[2] || "";
+          const var1 = parts[3] || "";
+          const var2 = parts[4] || "";
+          const var3 = parts[5] || "";
           if (phone.length >= 8) {
-            parsed.push({ name, phone, company });
+            parsed.push({ name, phone, company, var1, var2, var3 });
           }
         }
       }
 
       if (parsed.length > 0) {
         setCustomList(parsed);
-        setCsvSuccessMsg(`Added ${parsed.length} manual contacts!`);
+        setCsvSuccessMsg(`Added ${parsed.length} manual contacts with variables!`);
       } else {
-        setCsvErrorMsg("Could not parse contacts. Check format: Name,Phone,Company");
+        setCsvErrorMsg("Could not parse contacts. Check format: Name,Phone,Company,Var1,Var2,Var3");
       }
     } catch (err) {
       setCsvErrorMsg("Error parsing inputs.");
@@ -566,75 +578,6 @@ export function WhatsappModule({
         title="WhatsApp Control Center"
         description="Launch marketing broadcast campaigns, connect your business number, configure auto-responder rules, and review replies."
       />
-
-      {/* Tabs Menu Navigation */}
-      <div className="flex border-b border-line gap-4 overflow-x-auto pb-1">
-        <button
-          onClick={() => setActiveTab("status")}
-          className={`pb-3 text-sm font-semibold tracking-tight transition-all border-b-2 px-1 whitespace-nowrap ${
-            activeTab === "status"
-              ? "border-black text-black"
-              : "border-transparent text-fog hover:text-black"
-          }`}
-        >
-          <div className="flex items-center gap-1.5">
-            <Settings size={15} />
-            Connection & Status
-          </div>
-        </button>
-        <button
-          onClick={() => setActiveTab("inbox")}
-          className={`pb-3 text-sm font-semibold tracking-tight transition-all border-b-2 px-1 whitespace-nowrap ${
-            activeTab === "inbox"
-              ? "border-black text-black"
-              : "border-transparent text-fog hover:text-black"
-          }`}
-        >
-          <div className="flex items-center gap-1.5">
-            <Inbox size={15} />
-            Chat Inbox (Replies)
-          </div>
-        </button>
-        <button
-          onClick={() => setActiveTab("campaigns")}
-          className={`pb-3 text-sm font-semibold tracking-tight transition-all border-b-2 px-1 whitespace-nowrap ${
-            activeTab === "campaigns"
-              ? "border-black text-black"
-              : "border-transparent text-fog hover:text-black"
-          }`}
-        >
-          <div className="flex items-center gap-1.5">
-            <Megaphone size={15} />
-            Broadcast Campaigns
-          </div>
-        </button>
-        <button
-          onClick={() => setActiveTab("templates")}
-          className={`pb-3 text-sm font-semibold tracking-tight transition-all border-b-2 px-1 whitespace-nowrap ${
-            activeTab === "templates"
-              ? "border-black text-black"
-              : "border-transparent text-fog hover:text-black"
-          }`}
-        >
-          <div className="flex items-center gap-1.5">
-            <FolderHeart size={15} />
-            Templates Library
-          </div>
-        </button>
-        <button
-          onClick={() => setActiveTab("rules")}
-          className={`pb-3 text-sm font-semibold tracking-tight transition-all border-b-2 px-1 whitespace-nowrap ${
-            activeTab === "rules"
-              ? "border-black text-black"
-              : "border-transparent text-fog hover:text-black"
-          }`}
-        >
-          <div className="flex items-center gap-1.5">
-            <Bot size={15} />
-            Chatbot Auto-Responder
-          </div>
-        </button>
-      </div>
 
       {/* 1. Status Tab content */}
       {activeTab === "status" && (
@@ -1150,7 +1093,7 @@ export function WhatsappModule({
                 <FieldGroup>
                   <div className="flex justify-between items-center">
                     <FieldLabel htmlFor="camp-template">Message Template</FieldLabel>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 flex-wrap">
                       <button
                         type="button"
                         onClick={() => setCampTemplate(prev => prev + " {{name}}")}
@@ -1164,6 +1107,27 @@ export function WhatsappModule({
                         className="text-[9px] bg-mist border border-line rounded px-1.5 py-0.5 hover:bg-line text-black font-mono"
                       >
                         + Company
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCampTemplate(prev => prev + " {{var1}}")}
+                        className="text-[9px] bg-mist border border-line rounded px-1.5 py-0.5 hover:bg-line text-black font-mono"
+                      >
+                        + Var1
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCampTemplate(prev => prev + " {{var2}}")}
+                        className="text-[9px] bg-mist border border-line rounded px-1.5 py-0.5 hover:bg-line text-black font-mono"
+                      >
+                        + Var2
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCampTemplate(prev => prev + " {{var3}}")}
+                        className="text-[9px] bg-mist border border-line rounded px-1.5 py-0.5 hover:bg-line text-black font-mono"
+                      >
+                        + Var3
                       </button>
                     </div>
                   </div>
@@ -1266,7 +1230,13 @@ export function WhatsappModule({
                     
                     <p className="whitespace-pre-wrap leading-relaxed text-[11px]">
                       {campTemplate 
-                        ? campTemplate.replace(/\{\{name\}\}/gi, "John Doe").replace(/\{\{company\}\}/gi, "Acme Corp")
+                        ? campTemplate
+                            .replace(/\{\{name\}\}/gi, "John Doe")
+                            .replace(/\{\{company\}\}/gi, "Acme Corp")
+                            .replace(/\{\{phone\}\}/gi, "+919999999999")
+                            .replace(/\{\{var1\}\}/gi, "Value A")
+                            .replace(/\{\{var2\}\}/gi, "Value B")
+                            .replace(/\{\{var3\}\}/gi, "Value C")
                         : "Template preview will dynamically load here..."}
                     </p>
                     
@@ -1353,9 +1323,12 @@ export function WhatsappModule({
               <FieldGroup>
                 <div className="flex justify-between items-center">
                   <FieldLabel htmlFor="tpl-text">Template Content</FieldLabel>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 flex-wrap">
                     <button type="button" onClick={() => setTplText(prev => prev + " {{name}}")} className="text-[9px] bg-mist border border-line rounded px-1.5 py-0.5 hover:bg-line font-mono">+ Name</button>
                     <button type="button" onClick={() => setTplText(prev => prev + " {{company}}")} className="text-[9px] bg-mist border border-line rounded px-1.5 py-0.5 hover:bg-line font-mono">+ Company</button>
+                    <button type="button" onClick={() => setTplText(prev => prev + " {{var1}}")} className="text-[9px] bg-mist border border-line rounded px-1.5 py-0.5 hover:bg-line font-mono">+ Var1</button>
+                    <button type="button" onClick={() => setTplText(prev => prev + " {{var2}}")} className="text-[9px] bg-mist border border-line rounded px-1.5 py-0.5 hover:bg-line font-mono">+ Var2</button>
+                    <button type="button" onClick={() => setTplText(prev => prev + " {{var3}}")} className="text-[9px] bg-mist border border-line rounded px-1.5 py-0.5 hover:bg-line font-mono">+ Var3</button>
                   </div>
                 </div>
                 <TextArea id="tpl-text" placeholder="Design your templates here..." value={tplText} onChange={(e) => setTplText(e.target.value)} required />

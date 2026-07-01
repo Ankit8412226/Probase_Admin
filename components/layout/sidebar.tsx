@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -8,6 +9,7 @@ import {
   BriefcaseBusiness,
   Building2,
   ChevronLeft,
+  ChevronDown,
   DollarSign,
   FileText,
   LayoutDashboard,
@@ -21,13 +23,19 @@ import {
   Calendar,
   MessageSquare,
   LogOut,
-  ShieldAlert,
-  ShieldCheck,
-  User
+  ChevronRight
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
+
+interface NavItem {
+  href?: string;
+  label: string;
+  icon: any;
+  allowedRoles: string[];
+  children?: Array<{ href: string; label: string }>;
+}
 
 const navSections = [
   {
@@ -59,7 +67,18 @@ const navSections = [
   {
     title: "Settings",
     items: [
-      { href: "/dashboard/whatsapp", label: "WhatsApp", icon: MessageSquare, allowedRoles: ["admin", "manager"] },
+      {
+        label: "WhatsApp CRM",
+        icon: MessageSquare,
+        allowedRoles: ["admin", "manager"],
+        children: [
+          { href: "/dashboard/whatsapp", label: "Status & Pairing" },
+          { href: "/dashboard/whatsapp/inbox", label: "Replies Inbox" },
+          { href: "/dashboard/whatsapp/campaigns", label: "Campaigns" },
+          { href: "/dashboard/whatsapp/templates", label: "Template Library" },
+          { href: "/dashboard/whatsapp/chatbot", label: "Chatbot Rules" },
+        ]
+      },
       { href: "/dashboard/targets", label: "Targets", icon: Target, allowedRoles: ["admin", "manager"] },
       { href: "/dashboard/reports", label: "Reports", icon: BarChart3, allowedRoles: ["admin", "manager"] },
     ]
@@ -81,6 +100,22 @@ export function Sidebar({
   const router = useRouter();
   const { user, setUser } = useAuth();
   const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+  
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+
+  // Auto-expand accordion if child path is active
+  useEffect(() => {
+    navSections.forEach((section) => {
+      section.items.forEach((item) => {
+        if (item.children) {
+          const hasActiveChild = item.children.some((c) => pathname === c.href);
+          if (hasActiveChild) {
+            setExpandedGroups((prev) => ({ ...prev, [item.label]: true }));
+          }
+        }
+      });
+    });
+  }, [pathname]);
 
   async function handleLogout() {
     if (isDemoMode) {
@@ -93,13 +128,12 @@ export function Sidebar({
     router.refresh();
   }
 
-  // Get active role colors for the pill badge
   const getRoleBadgeTone = (role: string) => {
     switch (role) {
-      case "admin": return "bg-purple-50 text-purple-700 border-purple-100";
-      case "manager": return "bg-amber-50 text-amber-700 border-amber-100";
-      case "business": return "bg-emerald-50 text-emerald-700 border-emerald-100";
-      default: return "bg-gray-50 text-gray-700 border-gray-100";
+      case "admin": return "bg-purple-900/40 text-purple-200 border-purple-800/40";
+      case "manager": return "bg-amber-900/40 text-amber-200 border-amber-800/40";
+      case "business": return "bg-emerald-900/40 text-emerald-200 border-emerald-800/40";
+      default: return "bg-zinc-800 text-zinc-300 border-zinc-700";
     }
   };
 
@@ -114,14 +148,15 @@ export function Sidebar({
       </button>
       <div
         className={cn(
-          "fixed inset-0 z-40 bg-black/30 backdrop-blur-sm transition lg:hidden",
+          "fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition lg:hidden",
           mobileOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
         )}
         onClick={onMobileToggle}
       />
       <aside
+        style={{ backgroundColor: "#0c0f12" }}
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex h-screen flex-col border-r border-line bg-[#0c0f12]/98 text-white/90 px-4 py-6 shadow-xl backdrop-blur-md lg:sticky lg:top-0 lg:z-20 transition-all duration-300",
+          "fixed inset-y-0 left-0 z-50 flex h-screen flex-col border-r border-white/5 text-white/90 px-4 py-6 shadow-2xl lg:sticky lg:top-0 lg:z-20 transition-all duration-300",
           collapsed ? "w-[84px]" : "w-[270px]",
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
@@ -129,14 +164,14 @@ export function Sidebar({
         {/* Branding header */}
         <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-5 px-1.5">
           <div className={cn("flex items-center gap-2.5 overflow-hidden transition-all duration-200", collapsed && "w-0 opacity-0")}>
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-black font-bold shadow-md shadow-emerald-500/10">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-black font-extrabold shadow-md shadow-emerald-500/10">
               P
             </div>
             <div>
               <p className="font-mono text-[10px] font-bold uppercase tracking-[0.24em] text-white/40 leading-none">
                 Probase Solutions
               </p>
-              <p className="mt-1 text-sm font-semibold tracking-tight text-white leading-none">
+              <p className="mt-1 text-xs font-semibold tracking-tight text-white/80 leading-none">
                 {user?.role === "employee" ? "Employee Portal" : user?.role === "business" ? "Business Panel" : "Command Center"}
               </p>
             </div>
@@ -151,9 +186,8 @@ export function Sidebar({
         </div>
 
         {/* Section based Navigation list */}
-        <nav className="mt-6 flex-1 space-y-5 overflow-y-auto pr-1 select-none scrollbar-thin">
+        <nav className="mt-6 flex-1 space-y-5 overflow-y-auto pr-1 select-none scrollbar-none">
           {navSections.map((section) => {
-            // Filter items based on roles
             const visibleItems = section.items.filter((item) =>
               user?.role ? item.allowedRoles.includes(user.role) : false
             );
@@ -162,37 +196,105 @@ export function Sidebar({
 
             return (
               <div key={section.title} className="space-y-1.5">
-                {/* Section title subhead */}
                 {!collapsed && (
                   <h5 className="px-3 text-[9px] font-bold uppercase tracking-[0.2em] text-white/30 font-mono">
                     {section.title}
                   </h5>
                 )}
 
-                {/* Section items list */}
                 <div className="space-y-1">
-                  {visibleItems.map((item) => {
+                  {visibleItems.map((item: NavItem) => {
                     const Icon = item.icon;
-                    const active =
-                      pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+
+                    // If item has child submenus
+                    if (item.children) {
+                      const isExpanded = expandedGroups[item.label];
+                      const hasActiveChild = item.children.some((c) => pathname === c.href);
+
+                      return (
+                        <div key={item.label} className="space-y-1">
+                          <button
+                            onClick={() => {
+                              if (collapsed && item.children?.[0]?.href) {
+                                router.push(item.children[0].href);
+                              } else {
+                                setExpandedGroups((prev) => ({ ...prev, [item.label]: !prev[item.label] }));
+                              }
+                            }}
+                            className={cn(
+                              "w-full relative flex items-center justify-between rounded-[12px] px-3.5 py-2.5 text-xs font-semibold tracking-wide transition-all group duration-200 outline-none focus:outline-none",
+                              hasActiveChild
+                                ? "bg-white/10 text-white"
+                                : "text-white/60 hover:bg-white/5 hover:text-white",
+                            )}
+                            title={collapsed ? item.label : undefined}
+                          >
+                            <div className="flex items-center gap-3.5">
+                              <Icon size={16} className="text-white/50 group-hover:text-white shrink-0" />
+                              <span className={cn("transition-all duration-200 text-left", collapsed && "hidden w-0 opacity-0")}>
+                                {item.label}
+                              </span>
+                            </div>
+                            {!collapsed && (
+                              <ChevronDown
+                                size={12}
+                                className={cn(
+                                  "text-white/40 transition-transform duration-200",
+                                  isExpanded && "rotate-180"
+                                )}
+                              />
+                            )}
+                          </button>
+
+                          {/* Render children sub-menu list */}
+                          {isExpanded && !collapsed && (
+                            <div className="pl-6 space-y-1 transition-all duration-200">
+                              {item.children.map((child) => {
+                                const childActive = pathname === child.href;
+                                return (
+                                  <Link
+                                    key={child.href}
+                                    href={child.href}
+                                    className={cn(
+                                      "flex items-center gap-2.5 rounded-[8px] pl-4 py-2.5 text-[11px] font-semibold transition-all duration-150 outline-none focus:outline-none",
+                                      childActive
+                                        ? "text-emerald-400 font-bold bg-white/5"
+                                        : "text-white/40 hover:text-white hover:translate-x-1"
+                                    )}
+                                  >
+                                    <span className={cn(
+                                      "w-1 h-1 rounded-full shrink-0",
+                                      childActive ? "bg-emerald-400" : "bg-white/20"
+                                    )} />
+                                    {child.label}
+                                  </Link>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+
+                    // Standard link layout
+                    const active = item.href ? (pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))) : false;
 
                     return (
                       <Link
-                        key={item.href}
-                        href={item.href}
+                        key={item.label}
+                        href={item.href || "#"}
                         className={cn(
-                          "relative flex items-center gap-3.5 rounded-[12px] px-3.5 py-2.5 text-xs font-semibold tracking-wide transition-all group duration-200",
+                          "relative flex items-center gap-3.5 rounded-[12px] px-3.5 py-2.5 text-xs font-semibold tracking-wide transition-all group duration-200 outline-none focus:outline-none",
                           active
-                            ? "bg-white text-black shadow-lg"
+                            ? "bg-white/10 text-white shadow-lg font-bold"
                             : "text-white/60 hover:bg-white/5 hover:text-white hover:translate-x-1.5",
                         )}
                         title={collapsed ? item.label : undefined}
                       >
-                        {/* Active indicator bar */}
                         {active && (
-                          <span className="absolute left-0 top-3 bottom-3 w-1 rounded-r bg-emerald-500" />
+                          <span className="absolute left-0 top-3.5 bottom-3.5 w-1 rounded-r bg-emerald-500" />
                         )}
-                        <Icon size={16} className={cn("shrink-0", active ? "text-black" : "text-white/50 group-hover:text-white")} />
+                        <Icon size={16} className={cn("shrink-0", active ? "text-white" : "text-white/50 group-hover:text-white")} />
                         <span className={cn("transition-all duration-200", collapsed && "hidden w-0 opacity-0")}>
                           {item.label}
                         </span>
@@ -209,7 +311,6 @@ export function Sidebar({
         <div className="border-t border-white/10 pt-4 mt-auto">
           {collapsed ? (
             <div className="flex flex-col items-center gap-4">
-              {/* Collapsed profile trigger */}
               <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-xs font-bold text-white/80" title={user?.name}>
                 {user?.name
                   .split(" ")
@@ -220,7 +321,7 @@ export function Sidebar({
               </div>
               <button
                 onClick={handleLogout}
-                className="p-2 rounded-xl bg-white/5 hover:bg-red-500/10 hover:text-red-500 text-white/40 transition-colors"
+                className="p-2 rounded-xl bg-white/5 hover:bg-red-500/10 hover:text-red-500 text-white/40 transition-colors focus:outline-none"
                 title="Sign Out"
               >
                 <LogOut size={16} />
@@ -248,7 +349,7 @@ export function Sidebar({
               </div>
               <button
                 onClick={handleLogout}
-                className="p-2 rounded-xl text-white/40 hover:text-red-400 hover:bg-white/5 transition-colors shrink-0"
+                className="p-2 rounded-xl text-white/40 hover:text-red-400 hover:bg-white/5 transition-colors shrink-0 focus:outline-none"
                 title="Sign Out"
               >
                 <LogOut size={14} />

@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
 
 async function runBroadcastInBackground(
   campaignId: string,
-  targets: Array<{ name: string; phone?: string; company?: string }>,
+  targets: Array<{ name: string; phone?: string; company?: string; var1?: string; var2?: string; var3?: string }>,
   templateText: string,
   mediaUrl: string | undefined,
   sessionId: string
@@ -80,10 +80,14 @@ async function runBroadcastInBackground(
   for (const target of targets) {
     if (!target.phone) continue;
 
-    // Interpolate placeholders: {{name}} and {{company}}
+    // Interpolate placeholders: {{name}}, {{company}}, {{phone}}, {{var1}}, {{var2}}, {{var3}}
     let text = templateText
       .replace(/\{\{name\}\}/gi, target.name)
-      .replace(/\{\{company\}\}/gi, target.company || "Your Business");
+      .replace(/\{\{company\}\}/gi, target.company || "Your Business")
+      .replace(/\{\{phone\}\}/gi, target.phone)
+      .replace(/\{\{var1\}\}/gi, target.var1 || "")
+      .replace(/\{\{var2\}\}/gi, target.var2 || "")
+      .replace(/\{\{var3\}\}/gi, target.var3 || "");
 
     try {
       await sendWhatsappAlert(

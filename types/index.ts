@@ -300,7 +300,7 @@ export interface WhatsappCampaignRecord {
   sentCount: number;
   totalCount: number;
   createdAt: string;
-  customContacts?: Array<{ name: string; phone: string; company?: string }>;
+  customContacts?: Array<{ name: string; phone: string; company?: string; var1?: string; var2?: string; var3?: string }>;
 }
 
 export interface WhatsappTemplateRecord {
