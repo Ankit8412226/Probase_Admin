@@ -4,7 +4,7 @@ import { handleApiException } from "@/lib/api-route";
 import { apiError, apiSuccess } from "@/lib/http";
 import { getLeads } from "@/lib/services/leads";
 import { getClients } from "@/lib/services/clients";
-import { updateCampaign, sendWhatsappAlert } from "@/lib/services/whatsapp";
+import { updateCampaign, sendWhatsappAlert, getWhatsappConfig, getAppOrigin } from "@/lib/services/whatsapp";
 import WhatsappCampaign from "@/models/WhatsappCampaign";
 
 export async function POST(request: NextRequest) {
@@ -39,8 +39,21 @@ export async function POST(request: NextRequest) {
       targets = campaign.customContacts || [];
     }
 
-    // Filter valid phone numbers
-    const validTargets = targets.filter(t => t.phone && t.phone.trim().length >= 8);
+    // Filter valid phone numbers and map safely (protecting against number/object types)
+    const validTargets = targets
+      .filter(t => {
+        if (!t.phone) return false;
+        const phoneStr = String(t.phone).trim();
+        return phoneStr.length >= 8;
+      })
+      .map(t => ({
+        name: t.name ? String(t.name) : "",
+        phone: String(t.phone).trim(),
+        company: t.company ? String(t.company) : "",
+        var1: (t as any).var1 ? String((t as any).var1) : "",
+        var2: (t as any).var2 ? String((t as any).var2) : "",
+        var3: (t as any).var3 ? String((t as any).var3) : "",
+      }));
 
     if (validTargets.length === 0) {
       return apiError("No valid target contacts with phone numbers found.", 400);
@@ -53,14 +66,55 @@ export async function POST(request: NextRequest) {
       sentCount: 0
     });
 
-    // RUN BROADCAST ASYNCHRONOUSLY IN BACKGROUND
-    // This allows Vercel serverless function to return 202 Accepted immediately
-    // without timing out during long loops.
-    runBroadcastInBackground(campaignId, validTargets, campaign.templateText, campaign.mediaUrl, sessionId || "default").catch(err => {
-      console.error(`Campaign ${campaignId} background run failed:`, err);
-    });
+    const config = await getWhatsappConfig();
+    const useGatewayBroadcast = config.gatewayUrl && config.gatewayUrl.trim().startsWith("http");
 
-    return apiSuccess({ success: true, message: "Campaign broadcast started in background.", total: validTargets.length }, { status: 202 });
+    if (useGatewayBroadcast) {
+      try {
+        const callbackUrl = `${getAppOrigin()}/api/whatsapp/campaigns/callback`;
+        console.log(`[Campaign ${campaignId}] Delegating campaign run to gateway: ${config.gatewayUrl}/broadcast`);
+        
+        // Fire-and-forget to gateway broadcast endpoint
+        fetch(`${config.gatewayUrl.replace(/\/$/, "")}/broadcast`, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "x-dashboard-url": getAppOrigin()
+          },
+          body: JSON.stringify({
+            sessionId: sessionId || "default",
+            targets: validTargets,
+            templateText: campaign.templateText,
+            mediaUrl: campaign.mediaUrl,
+            campaignId,
+            callbackUrl
+          }),
+        }).then(res => {
+          if (!res.ok) {
+            console.error(`Gateway returned status ${res.status} for campaign ${campaignId} broadcast`);
+          }
+        }).catch(err => {
+          console.error(`Gateway broadcast dispatch failed, fallback to Next.js background for campaign ${campaignId}:`, err);
+          // Fallback to local background runner
+          runBroadcastInBackground(campaignId, validTargets, campaign.templateText, campaign.mediaUrl, sessionId || "default").catch(localErr => {
+            console.error(`Fallback runBroadcastInBackground failed for campaign ${campaignId}:`, localErr);
+          });
+        });
+
+      } catch (err) {
+        console.error(`Failed to dispatch broadcast to gateway for campaign ${campaignId}, using fallback:`, err);
+        runBroadcastInBackground(campaignId, validTargets, campaign.templateText, campaign.mediaUrl, sessionId || "default").catch(localErr => {
+          console.error(`Fallback runBroadcastInBackground failed for campaign ${campaignId}:`, localErr);
+        });
+      }
+    } else {
+      // Run broadcast locally in background
+      runBroadcastInBackground(campaignId, validTargets, campaign.templateText, campaign.mediaUrl, sessionId || "default").catch(err => {
+        console.error(`Campaign ${campaignId} background run failed:`, err);
+      });
+    }
+
+    return apiSuccess({ success: true, message: "Campaign broadcast started.", total: validTargets.length }, { status: 202 });
   } catch (error) {
     return handleApiException(error);
   }

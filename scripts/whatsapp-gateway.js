@@ -15,12 +15,16 @@ const sessions = new Map();
 const AUTH_BASE_DIR = ".wa_auth";
 
 // Automatically captured dashboard URL to forward webhooks to
-let dashboardUrl = "";
+// Priority: env variable > x-dashboard-url header from Vercel requests
+let dashboardUrl = (process.env.DASHBOARD_URL || "").replace(/\/$/, "");
+if (dashboardUrl) {
+  console.log(`[Gateway] Dashboard URL pre-configured from env: ${dashboardUrl}`);
+}
 
 app.use((req, res, next) => {
   const origin = req.headers["x-dashboard-url"] || req.query.dashboardUrl || req.headers.origin || req.headers.referer;
   if (origin && !origin.includes("localhost:3001") && origin.startsWith("http")) {
-    // Clean trailing slash
+    // Update dashboard URL dynamically from incoming Vercel requests
     dashboardUrl = origin.replace(/\/$/, "");
   }
   next();
@@ -255,6 +259,83 @@ app.post("/send", async (req, res) => {
     console.error(`[Session: ${sessionId}] Failed to send message:`, err);
     res.status(500).json({ error: err.message });
   }
+});
+
+// Broadcast campaign processor on persistent server
+async function runGatewayBroadcast(sessionId, sock, targets, templateText, mediaUrl, campaignId, callbackUrl) {
+  console.log(`[Session: ${sessionId}] [Campaign ${campaignId}] Starting persistent broadcast to ${targets.length} targets...`);
+
+  let sentCount = 0;
+
+  for (const target of targets) {
+    if (!target.phone) continue;
+
+    const cleanedPhone = String(target.phone).replace(/[^0-9]/g, "");
+    const formattedPhone = `${cleanedPhone}@s.whatsapp.net`;
+
+    let message = templateText
+      .replace(/\{\{name\}\}/gi, target.name || "")
+      .replace(/\{\{company\}\}/gi, target.company || "Your Business")
+      .replace(/\{\{phone\}\}/gi, target.phone || "")
+      .replace(/\{\{var1\}\}/gi, target.var1 || "")
+      .replace(/\{\{var2\}\}/gi, target.var2 || "")
+      .replace(/\{\{var3\}\}/gi, target.var3 || "");
+
+    try {
+      if (mediaUrl && mediaUrl.trim().startsWith("http")) {
+        await sock.sendMessage(formattedPhone, { 
+          image: { url: mediaUrl }, 
+          caption: message 
+        });
+      } else {
+        await sock.sendMessage(formattedPhone, { text: message });
+      }
+
+      sentCount++;
+
+      // Send progress updates back to Dashboard
+      fetch(callbackUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ campaignId, sentCount, status: "Running" })
+      }).catch(err => console.error(`[Campaign ${campaignId}] Callback progress failed:`, err.message));
+
+    } catch (err) {
+      console.error(`[Campaign ${campaignId}] Failed to send to ${target.phone}:`, err.message);
+    }
+
+    // 1.5s delay to avoid spam detection
+    await new Promise(resolve => setTimeout(resolve, 1500));
+  }
+
+  // Send completion update
+  fetch(callbackUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ campaignId, sentCount, status: "Completed" })
+  }).catch(err => console.error(`[Campaign ${campaignId}] Callback completion failed:`, err.message));
+
+  console.log(`[Session: ${sessionId}] [Campaign ${campaignId}] Persistent broadcast finished. Sent: ${sentCount}`);
+}
+
+app.post("/broadcast", async (req, res) => {
+  const sessionId = req.body.sessionId || "default";
+  const { targets, templateText, mediaUrl, campaignId, callbackUrl } = req.body;
+
+  if (!targets || !templateText || !campaignId || !callbackUrl) {
+    return res.status(400).json({ error: "Missing required parameters for broadcast." });
+  }
+
+  const session = sessions.get(sessionId);
+
+  if (!session || session.connectionStatus !== "CONNECTED" || !session.sock) {
+    return res.status(503).json({ error: `WhatsApp session [${sessionId}] is not authenticated yet.` });
+  }
+
+  // Start executing broadcast in background of this persistent container
+  runGatewayBroadcast(sessionId, session.sock, targets, templateText, mediaUrl, campaignId, callbackUrl);
+
+  res.json({ success: true, message: "Broadcast delegated to gateway background thread." });
 });
 
 // Auto-boot default session on launch
