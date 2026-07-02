@@ -317,7 +317,7 @@ export function KnowledgeBaseModule({
                 {categoryLabels[selectedArticle.category]}
               </span>
               <span className="text-[10px] text-fog font-mono">
-                Last updated: {new Date(selectedArticle.updatedAt || selectedArticle.createdAt).toLocaleDateString("en-IN")}
+                Last updated: {selectedArticle.updatedAt || selectedArticle.createdAt ? new Date(selectedArticle.updatedAt || selectedArticle.createdAt || "").toLocaleDateString("en-IN") : "N/A"}
               </span>
             </div>
             
