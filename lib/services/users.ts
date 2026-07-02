@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 
 import User from "@/models/User";
-import { ensureDatabase, mapDocument, useMemoryStore } from "@/lib/services/helpers";
+import { ensureDatabase, mapDocument, useMemoryStore, getCurrentTenantId } from "@/lib/services/helpers";
 import { getMemoryStore } from "@/lib/services/store";
 import type { AuthUser, UserRecord } from "@/types";
 
@@ -11,7 +11,8 @@ export async function getUsers() {
   }
 
   await ensureDatabase();
-  const users = await User.find().lean();
+  const tenantId = await getCurrentTenantId();
+  const users = await User.find({ tenantId }).lean();
   return users.map((item) => mapDocument(item as unknown as { _id: string } & UserRecord));
 }
 
@@ -54,6 +55,7 @@ export async function upsertUsers(users: UserRecord[]) {
   const preparedUsers = await Promise.all(
     users.map(async (user) => ({
       _id: user.id,
+      tenantId: "demo_tenant",
       name: user.name,
       email: user.email.toLowerCase(),
       role: user.role,

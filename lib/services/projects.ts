@@ -1,6 +1,6 @@
 import Project from "@/models/Project";
 import { createId } from "@/lib/utils";
-import { ensureDatabase, mapDocument, useMemoryStore } from "@/lib/services/helpers";
+import { ensureDatabase, mapDocument, useMemoryStore, getCurrentTenantId } from "@/lib/services/helpers";
 import { getMemoryStore } from "@/lib/services/store";
 import type { ProjectRecord } from "@/types";
 
@@ -10,7 +10,8 @@ export async function getProjects() {
   }
 
   await ensureDatabase();
-  const projects = await Project.find().sort({ createdAt: -1 }).lean();
+  const tenantId = await getCurrentTenantId();
+  const projects = await Project.find({ tenantId }).sort({ createdAt: -1 }).lean();
   return projects.map((item) => mapDocument(item as unknown as { _id: string } & ProjectRecord));
 }
 
@@ -20,7 +21,8 @@ export async function getProjectById(id: string) {
   }
 
   await ensureDatabase();
-  const project = await Project.findById(id).lean();
+  const tenantId = await getCurrentTenantId();
+  const project = await Project.findOne({ _id: id, tenantId }).lean();
   return project ? mapDocument(project as unknown as { _id: string } & ProjectRecord) : null;
 }
 
@@ -38,7 +40,8 @@ export async function createProject(payload: Omit<ProjectRecord, "id">) {
   }
 
   await ensureDatabase();
-  await Project.create({ _id: project.id, ...project });
+  const tenantId = await getCurrentTenantId();
+  await Project.create({ _id: project.id, tenantId, ...project });
   return project;
 }
 
@@ -60,8 +63,9 @@ export async function updateProject(id: string, payload: Partial<Omit<ProjectRec
   }
 
   await ensureDatabase();
-  const project = await Project.findByIdAndUpdate(
-    id,
+  const tenantId = await getCurrentTenantId();
+  const project = await Project.findOneAndUpdate(
+    { _id: id, tenantId },
     { ...payload, updatedAt: new Date().toISOString() },
     { new: true },
   ).lean();
@@ -77,7 +81,8 @@ export async function deleteProject(id: string) {
   }
 
   await ensureDatabase();
-  const result = await Project.deleteOne({ _id: id });
+  const tenantId = await getCurrentTenantId();
+  const result = await Project.deleteOne({ _id: id, tenantId });
   return result.deletedCount === 1;
 }
 
@@ -89,6 +94,6 @@ export async function seedProjects(records: ProjectRecord[]) {
 
   await ensureDatabase();
   await Project.deleteMany({});
-  await Project.insertMany(records.map((project) => ({ _id: project.id, ...project })));
+  await Project.insertMany(records.map((project) => ({ _id: project.id, tenantId: "demo_tenant", ...project })));
   return getProjects();
 }

@@ -41,7 +41,7 @@ export function DataTable<T extends { id: string }>({
   const paginatedData = data.slice(startIndex, endIndex);
 
   return (
-    <Card className="overflow-hidden p-0 border border-line bg-white shadow-sm flex flex-col justify-between">
+    <Card className="overflow-hidden p-0 border border-slate-800 bg-slate-900 shadow-sm flex flex-col justify-between">
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-line text-left">
           <thead className="bg-mist/60">
@@ -56,12 +56,12 @@ export function DataTable<T extends { id: string }>({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-line bg-white">
+          <tbody className="divide-y divide-slate-800 bg-slate-900">
             {paginatedData.length ? (
               paginatedData.map((item) => (
-                <tr key={item.id} className="transition hover:bg-mist/30">
+                <tr key={item.id} className="transition hover:bg-slate-800/60">
                   {columns.map((column) => (
-                    <td key={column.key} className="px-5 py-3.5 align-middle text-sm text-black">
+                    <td key={column.key} className="px-5 py-3.5 align-middle text-sm text-slate-200">
                       <div className={column.className}>{column.render(item)}</div>
                     </td>
                   ))}
@@ -83,12 +83,12 @@ export function DataTable<T extends { id: string }>({
 
       {/* Pagination Footer Dashboard Controls */}
       {totalRecords > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-5 py-3.5 border-t border-line bg-white/70 backdrop-blur-sm">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-5 py-3.5 border-t border-slate-800 bg-slate-900/80 backdrop-blur-sm">
           {/* Record statistics */}
-          <div className="text-xs text-fog font-medium">
-            Showing <span className="font-semibold text-black">{totalRecords === 0 ? 0 : startIndex + 1}</span> to{" "}
-            <span className="font-semibold text-black">{endIndex}</span> of{" "}
-            <span className="font-semibold text-black">{totalRecords}</span> entries
+          <div className="text-xs text-slate-400 font-medium">
+            Showing <span className="font-semibold text-slate-200">{totalRecords === 0 ? 0 : startIndex + 1}</span> to{" "}
+            <span className="font-semibold text-slate-200">{endIndex}</span> of{" "}
+            <span className="font-semibold text-slate-200">{totalRecords}</span> entries
           </div>
 
           {/* Interactive controls */}
@@ -102,7 +102,7 @@ export function DataTable<T extends { id: string }>({
                   setPageSize(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="h-8 rounded-lg border border-line bg-white px-2 py-1 text-xs font-semibold text-black focus:border-black focus:outline-none"
+                className="h-8 rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-xs font-semibold text-slate-200 focus:border-indigo-500 focus:outline-none"
               >
                 <option value={5}>5</option>
                 <option value={10}>10</option>
@@ -122,7 +122,7 @@ export function DataTable<T extends { id: string }>({
                 <ChevronLeft size={14} />
               </Button>
               
-              <div className="text-xs font-semibold text-black font-mono bg-mist px-2.5 py-1 rounded-md">
+              <div className="text-xs font-semibold text-slate-300 font-mono bg-slate-800 px-2.5 py-1 rounded-md">
                 Page {activePage} of {totalPages}
               </div>
 

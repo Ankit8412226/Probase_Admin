@@ -1,4 +1,5 @@
 import { connectToDatabase, hasMongoConnection } from "@/lib/db";
+import { getSessionUser } from "@/lib/auth";
 
 export function useMemoryStore() {
   return !hasMongoConnection();
@@ -30,4 +31,14 @@ export async function ensureDatabase() {
   }
 
   return connectToDatabase();
+}
+
+export async function getCurrentTenantId(): Promise<string> {
+  try {
+    const user = await getSessionUser();
+    return user?.tenantId || "demo_tenant";
+  } catch (err) {
+    // Fallback if cookies() cannot be parsed (e.g. background operations or build-time prerendering)
+    return "demo_tenant";
+  }
 }

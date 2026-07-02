@@ -54,7 +54,7 @@ export function LeadsModule({
       initialItems: initialLeads,
     });
   const dialog = useDisclosure();
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("query") || "" : "");
   const [stageFilter, setStageFilter] = useState("All");
   const [editingLead, setEditingLead] = useState<LeadRecord | null>(null);
   const [pitchLead, setPitchLead] = useState<LeadRecord | null>(null);
@@ -175,9 +175,9 @@ export function LeadsModule({
         }
       />
 
-      <Card className="border-black/10 bg-black text-white">
-        <p className="text-xs uppercase tracking-[0.18em] text-white/60">Status Rule</p>
-        <p className="mt-3 text-sm text-white/80">
+      <Card className="border-slate-800 bg-slate-900 text-slate-100">
+        <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Status Rule</p>
+        <p className="mt-3 text-sm text-slate-300">
           Lead status changes from the lead form stage. Set stage to Won to mark it converted, or
           set stage to Lost to close it as not converted. Reports and business calculations now use
           the converted/lost date instead of only the created date.
@@ -215,7 +215,7 @@ export function LeadsModule({
       </Card>
 
       {error ? (
-        <div className="rounded-[18px] border border-line bg-black px-4 py-3 text-sm text-white">
+        <div className="rounded-[18px] border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-400">
           {error}
         </div>
       ) : null}
@@ -305,19 +305,21 @@ export function LeadsModule({
                   <div className="flex items-center gap-2">
                     <Button
                       variant="secondary"
-                      className="h-9 px-3"
+                      className="h-9 px-3 flex items-center gap-1.5"
                       onClick={() => setCopilotLead(lead)}
                       title="Open Sales Co-Pilot"
                     >
                       <Bot size={14} />
+                      <span>Co-Pilot</span>
                     </Button>
                     <Button
                       variant="secondary"
-                      className="h-9 px-3"
+                      className="h-9 px-3 flex items-center gap-1.5"
                       onClick={() => handleGeneratePitch(lead)}
                       title="Generate Pitch"
                     >
                       <Mail size={14} />
+                      <span>AI Pitch</span>
                     </Button>
                     <Button
                       variant="secondary"

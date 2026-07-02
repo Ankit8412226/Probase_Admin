@@ -4,7 +4,7 @@ import WhatsappCampaign from "@/models/WhatsappCampaign";
 import WhatsappTemplate from "@/models/WhatsappTemplate";
 import WhatsappRule from "@/models/WhatsappRule";
 import { createId } from "@/lib/utils";
-import { ensureDatabase, mapDocument, useMemoryStore } from "@/lib/services/helpers";
+import { ensureDatabase, mapDocument, useMemoryStore, getCurrentTenantId } from "@/lib/services/helpers";
 import { getMemoryStore } from "@/lib/services/store";
 import type { WhatsappLogRecord, WhatsappMessageRecord, WhatsappCampaignRecord } from "@/types";
 
@@ -17,7 +17,8 @@ export async function getWhatsappConfig() {
   }
 
   await ensureDatabase();
-  const config = await WhatsappConfig.findById("config").lean();
+  const tenantId = await getCurrentTenantId();
+  const config = await WhatsappConfig.findOne({ tenantId }).lean();
   return config ? { gatewayUrl: (config as any).gatewayUrl } : { gatewayUrl: "" };
 }
 
@@ -28,9 +29,10 @@ export async function saveWhatsappConfig(gatewayUrl: string) {
   }
 
   await ensureDatabase();
-  await WhatsappConfig.findByIdAndUpdate(
-    "config",
-    { gatewayUrl },
+  const tenantId = await getCurrentTenantId();
+  await WhatsappConfig.findOneAndUpdate(
+    { tenantId },
+    { gatewayUrl, tenantId },
     { upsert: true, new: true }
   );
   return true;
@@ -42,7 +44,8 @@ export async function getWhatsappLogs() {
   }
 
   await ensureDatabase();
-  const logs = await WhatsappLog.find().sort({ createdAt: -1 }).lean();
+  const tenantId = await getCurrentTenantId();
+  const logs = await WhatsappLog.find({ tenantId }).sort({ createdAt: -1 }).lean();
   return logs.map((item) =>
     mapDocument(item as unknown as { _id: string } & WhatsappLogRecord)
   ) as unknown as WhatsappLogRecord[];
@@ -113,7 +116,8 @@ export async function sendWhatsappAlert(
   }
 
   await ensureDatabase();
-  await WhatsappLog.create({ _id: id, ...logRecord });
+  const tenantId = await getCurrentTenantId();
+  await WhatsappLog.create({ _id: id, tenantId, ...logRecord });
   return logRecord;
 }
 
@@ -125,7 +129,8 @@ export async function getWhatsappMessages() {
   }
 
   await ensureDatabase();
-  const msgs = await WhatsappMessage.find().sort({ createdAt: -1 }).lean();
+  const tenantId = await getCurrentTenantId();
+  const msgs = await WhatsappMessage.find({ tenantId }).sort({ createdAt: -1 }).lean();
   return msgs.map((m) => mapDocument(m as any)) as unknown as WhatsappMessageRecord[];
 }
 
@@ -143,7 +148,9 @@ export async function createWhatsappMessage(payload: Omit<WhatsappMessageRecord,
   }
 
   await ensureDatabase();
-  await WhatsappMessage.create({ _id: record.id, ...record });
+  // If webhook calls this, the sessionId represents the tenant's gateway identity
+  const tenantId = payload.sessionId || "demo_tenant";
+  await WhatsappMessage.create({ _id: record.id, tenantId, ...record });
   return record;
 }
 
@@ -155,7 +162,8 @@ export async function getCampaigns() {
   }
 
   await ensureDatabase();
-  const campaigns = await WhatsappCampaign.find().sort({ createdAt: -1 }).lean();
+  const tenantId = await getCurrentTenantId();
+  const campaigns = await WhatsappCampaign.find({ tenantId }).sort({ createdAt: -1 }).lean();
   return campaigns.map((c) => mapDocument(c as any)) as unknown as WhatsappCampaignRecord[];
 }
 
@@ -177,7 +185,8 @@ export async function createCampaign(payload: Omit<WhatsappCampaignRecord, "id" 
   }
 
   await ensureDatabase();
-  await WhatsappCampaign.create({ _id: campaign.id, ...campaign });
+  const tenantId = await getCurrentTenantId();
+  await WhatsappCampaign.create({ _id: campaign.id, tenantId, ...campaign });
   return campaign;
 }
 
@@ -194,7 +203,8 @@ export async function updateCampaign(id: string, payload: Partial<Omit<WhatsappC
   }
 
   await ensureDatabase();
-  const updated = await WhatsappCampaign.findByIdAndUpdate(id, payload, { new: true }).lean();
+  const tenantId = await getCurrentTenantId();
+  const updated = await WhatsappCampaign.findOneAndUpdate({ _id: id, tenantId }, payload, { new: true }).lean();
   return updated ? (mapDocument(updated as any) as unknown as WhatsappCampaignRecord) : null;
 }
 
@@ -206,7 +216,8 @@ export async function getWhatsappTemplates() {
   }
 
   await ensureDatabase();
-  const templates = await WhatsappTemplate.find().sort({ createdAt: -1 }).lean();
+  const tenantId = await getCurrentTenantId();
+  const templates = await WhatsappTemplate.find({ tenantId }).sort({ createdAt: -1 }).lean();
   return templates.map((t) => mapDocument(t as any)) as unknown as import("@/types").WhatsappTemplateRecord[];
 }
 
@@ -225,7 +236,8 @@ export async function createWhatsappTemplate(payload: Omit<import("@/types").Wha
   }
 
   await ensureDatabase();
-  await WhatsappTemplate.create({ _id: record.id, ...record });
+  const tenantId = await getCurrentTenantId();
+  await WhatsappTemplate.create({ _id: record.id, tenantId, ...record });
   return record;
 }
 
@@ -237,7 +249,8 @@ export async function deleteWhatsappTemplate(id: string) {
   }
 
   await ensureDatabase();
-  await WhatsappTemplate.findByIdAndDelete(id);
+  const tenantId = await getCurrentTenantId();
+  await WhatsappTemplate.deleteOne({ _id: id, tenantId });
   return true;
 }
 
@@ -249,7 +262,8 @@ export async function getWhatsappRules() {
   }
 
   await ensureDatabase();
-  const rules = await WhatsappRule.find().sort({ createdAt: -1 }).lean();
+  const tenantId = await getCurrentTenantId();
+  const rules = await WhatsappRule.find({ tenantId }).sort({ createdAt: -1 }).lean();
   return rules.map((r) => mapDocument(r as any)) as unknown as import("@/types").WhatsappRuleRecord[];
 }
 
@@ -269,7 +283,8 @@ export async function createWhatsappRule(payload: Omit<import("@/types").Whatsap
   }
 
   await ensureDatabase();
-  await WhatsappRule.create({ _id: record.id, ...record });
+  const tenantId = await getCurrentTenantId();
+  await WhatsappRule.create({ _id: record.id, tenantId, ...record });
   return record;
 }
 
@@ -286,7 +301,8 @@ export async function updateWhatsappRule(id: string, payload: Partial<Omit<impor
   }
 
   await ensureDatabase();
-  const updated = await WhatsappRule.findByIdAndUpdate(id, payload, { new: true }).lean();
+  const tenantId = await getCurrentTenantId();
+  const updated = await WhatsappRule.findOneAndUpdate({ _id: id, tenantId }, payload, { new: true }).lean();
   return updated ? (mapDocument(updated as any) as unknown as import("@/types").WhatsappRuleRecord) : null;
 }
 
@@ -298,6 +314,7 @@ export async function deleteWhatsappRule(id: string) {
   }
 
   await ensureDatabase();
-  await WhatsappRule.findByIdAndDelete(id);
+  const tenantId = await getCurrentTenantId();
+  await WhatsappRule.deleteOne({ _id: id, tenantId });
   return true;
 }

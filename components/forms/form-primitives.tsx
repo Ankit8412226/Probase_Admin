@@ -3,12 +3,14 @@ import { cn } from "@/lib/utils";
 export function FieldLabel({
   htmlFor,
   children,
+  className,
 }: {
   htmlFor: string;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <label htmlFor={htmlFor} className="text-sm font-semibold text-black">
+    <label htmlFor={htmlFor} className={cn("text-sm font-semibold text-black", className)}>
       {children}
     </label>
   );

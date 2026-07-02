@@ -35,7 +35,9 @@ export function KnowledgeBaseModule({
     });
 
   const dialog = useDisclosure();
-  const [search, setSearch] = useState("");
+  const viewDialog = useDisclosure();
+  const [selectedArticle, setSelectedArticle] = useState<KnowledgeBaseRecord | null>(null);
+  const [search, setSearch] = useState(() => typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("query") || "" : "");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [editingArticle, setEditingArticle] = useState<KnowledgeBaseRecord | null>(null);
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
@@ -104,12 +106,12 @@ export function KnowledgeBaseModule({
   }
 
   const categoryTones = {
-    objection: "bg-red-50 text-red-700 border-red-200",
-    case_study: "bg-green-50 text-green-700 border-green-200",
-    pricing: "bg-blue-50 text-blue-700 border-blue-200",
-    usp: "bg-purple-50 text-purple-700 border-purple-200",
-    brochure: "bg-amber-50 text-amber-700 border-amber-200",
-    other: "bg-gray-50 text-gray-700 border-gray-200",
+    objection: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+    case_study: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    pricing: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
+    usp: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+    brochure: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+    other: "bg-slate-800 text-slate-300 border-slate-700",
   };
 
   const categoryLabels = {
@@ -170,7 +172,7 @@ export function KnowledgeBaseModule({
       </Card>
 
       {error ? (
-        <div className="rounded-[18px] border border-line bg-black px-4 py-3 text-sm text-white">
+        <div className="rounded-[18px] border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-400">
           {error}
         </div>
       ) : null}
@@ -190,14 +192,28 @@ export function KnowledgeBaseModule({
                       <Button variant="secondary" className="h-8 w-8 p-0" onClick={() => openEditModal(art)}>
                         <Pencil size={12} />
                       </Button>
-                      <Button variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:bg-red-50" onClick={() => handleDelete(art.id)}>
+                      <Button variant="ghost" className="h-8 w-8 p-0 text-red-650 hover:bg-red-50" onClick={() => handleDelete(art.id)}>
                         <Trash2 size={12} />
                       </Button>
                     </div>
                   )}
                 </div>
-                <h3 className="mt-4 text-lg font-bold text-black">{art.title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">{art.content}</p>
+                <h3 className="mt-4 text-lg font-bold text-white">{art.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-slate-300 whitespace-pre-wrap">
+                  {art.content.length > 200 ? `${art.content.slice(0, 200)}...` : art.content}
+                </p>
+                {art.content.length > 200 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedArticle(art);
+                      viewDialog.open();
+                    }}
+                    className="mt-2 text-xs font-semibold text-indigo-400 hover:text-indigo-300 hover:underline flex items-center gap-0.5"
+                  >
+                    Read Full Playbook &rarr;
+                  </button>
+                )}
               </div>
 
               {art.tags && art.tags.length > 0 && (
@@ -286,6 +302,50 @@ export function KnowledgeBaseModule({
           </div>
         </form>
       </Modal>
+
+      {/* Read Playbook Modal */}
+      <Modal
+        open={viewDialog.isOpen}
+        onClose={viewDialog.close}
+        title={selectedArticle?.title || "Playbook Article"}
+        description="Full playbook guidelines, objection handlers, and strategic references."
+      >
+        {selectedArticle && (
+          <div className="space-y-5">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold uppercase tracking-wider ${categoryTones[selectedArticle.category]}`}>
+                {categoryLabels[selectedArticle.category]}
+              </span>
+              <span className="text-[10px] text-fog font-mono">
+                Last updated: {new Date(selectedArticle.updatedAt || selectedArticle.createdAt).toLocaleDateString("en-IN")}
+              </span>
+            </div>
+            
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 max-h-[380px] overflow-y-auto">
+              <p className="text-sm leading-relaxed text-slate-200 whitespace-pre-wrap">
+                {selectedArticle.content}
+              </p>
+            </div>
+
+            {selectedArticle.tags && selectedArticle.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-2">
+                {selectedArticle.tags.map((tag, i) => (
+                  <span key={i} className="rounded bg-slate-900 border border-slate-800 px-2.5 py-0.5 text-[10px] text-fog font-medium">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <div className="flex justify-end pt-2">
+              <Button onClick={viewDialog.close}>
+                Close Playbook
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
       <SalesCopilotSidebar
         lead={null}
         open={isCopilotOpen}

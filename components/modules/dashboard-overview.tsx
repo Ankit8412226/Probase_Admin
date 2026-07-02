@@ -343,7 +343,7 @@ export function DashboardOverview({
         <div className="min-w-0 space-y-6">
           <Card>
             <div className="flex items-center gap-3">
-              <div className="rounded-full bg-black p-3 text-white">
+              <div className="rounded-full bg-slate-900 p-3 text-slate-100">
                 <CircleDollarSign size={18} />
               </div>
               <div>
@@ -354,7 +354,7 @@ export function DashboardOverview({
           </Card>
           <Card>
             <div className="flex items-center gap-3">
-              <div className="rounded-full bg-mist p-3 text-black">
+              <div className="rounded-full bg-mist p-3 text-slate-200">
                 <Wallet size={18} />
               </div>
               <div>
@@ -388,7 +388,7 @@ export function DashboardOverview({
               ))}
             </div>
           </Card>
-          <Card className="bg-black text-white">
+          <Card className="bg-slate-900 border border-slate-800 text-slate-100">
             <div className="flex items-start justify-between gap-4">
               <CardHeader
                 eyebrow="Insight"
@@ -396,7 +396,7 @@ export function DashboardOverview({
                 description="Current active contracts indicate room to increase delivery capacity without margin pressure."
                 invert
               />
-              <Sparkles size={18} className="shrink-0 text-white/70" />
+              <Sparkles size={18} className="shrink-0 text-slate-100/70" />
             </div>
           </Card>
         </div>

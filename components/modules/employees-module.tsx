@@ -29,7 +29,7 @@ export function EmployeesModule({ initialEmployees }: { initialEmployees: Employ
       initialItems: initialEmployees,
     });
   const dialog = useDisclosure();
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("query") || "" : "");
   const [roleFilter, setRoleFilter] = useState("All");
   const [editingEmployee, setEditingEmployee] = useState<EmployeeRecord | null>(null);
   const [registeringFaceEmployee, setRegisteringFaceEmployee] = useState<EmployeeRecord | null>(null);
@@ -129,7 +129,7 @@ export function EmployeesModule({ initialEmployees }: { initialEmployees: Employ
       </Card>
 
       {error ? (
-        <div className="rounded-[18px] border border-line bg-black px-4 py-3 text-sm text-white">
+        <div className="rounded-[18px] border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-400">
           {error}
         </div>
       ) : null}

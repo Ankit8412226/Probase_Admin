@@ -46,8 +46,8 @@ export function TargetPerformanceChart({
               description="Monthly comparison of target revenue and actual collections."
             />
             <div className="flex flex-wrap items-center gap-2">
-              <LegendPill colorClassName="bg-black/20" label="Target" />
-              <LegendPill colorClassName="bg-black" label="Actual (Paid)" />
+              <LegendPill colorClassName="bg-slate-700" label="Target" />
+              <LegendPill colorClassName="bg-indigo-500" label="Actual (Paid)" />
             </div>
           </div>
           <div className="h-[260px] min-w-0 sm:h-[320px]">
@@ -56,33 +56,35 @@ export function TargetPerformanceChart({
                 data={data}
                 margin={{ top: 12, right: 8, left: -20, bottom: 0 }}
               >
-                <CartesianGrid stroke="#E5E5E5" strokeDasharray="4 4" vertical={false} />
+                <CartesianGrid stroke="#1e293b" strokeDasharray="4 4" vertical={false} />
                 <XAxis
                   dataKey="month"
                   tickFormatter={formatMonth}
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: "#7A7A7A", fontSize: 12 }}
+                  tick={{ fill: "#94a3b8", fontSize: 11 }}
                   tickMargin={10}
                 />
                 <YAxis
                   width={60}
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: "#7A7A7A", fontSize: 12 }}
+                  tick={{ fill: "#94a3b8", fontSize: 11 }}
                   tickFormatter={(value) => `₹${Math.round(value / 1000)}k`}
                 />
                 <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
+                  formatter={(value: number) => [formatCurrency(value), "Amount"]}
                   labelFormatter={(label) => formatMonth(String(label))}
                   contentStyle={{
-                    borderRadius: 16,
-                    border: "1px solid #E5E5E5",
-                    backgroundColor: "#FFFFFF",
+                    borderRadius: 12,
+                    border: "1px solid #1e293b",
+                    backgroundColor: "#0e1524",
+                    color: "#f8fafc",
                   }}
+                  itemStyle={{ color: "#a5b4fc" }}
                 />
-                <Bar dataKey="targetRevenue" fill="#D4D4D4" radius={[6, 6, 0, 0]} maxBarSize={30} />
-                <Bar dataKey="actualRevenue" fill="#000000" radius={[6, 6, 0, 0]} maxBarSize={30} />
+                <Bar dataKey="targetRevenue" fill="#334155" radius={[6, 6, 0, 0]} maxBarSize={30} />
+                <Bar dataKey="actualRevenue" fill="#6366f1" radius={[6, 6, 0, 0]} maxBarSize={30} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -99,8 +101,8 @@ export function TargetPerformanceChart({
               description="Monthly comparison of target conversions and actual won deals."
             />
             <div className="flex flex-wrap items-center gap-2">
-              <LegendPill colorClassName="bg-black/20" label="Target" />
-              <LegendPill colorClassName="bg-black" label="Actual (Won)" />
+              <LegendPill colorClassName="bg-slate-700" label="Target" />
+              <LegendPill colorClassName="bg-emerald-500" label="Actual (Won)" />
             </div>
           </div>
           <div className="h-[260px] min-w-0 sm:h-[320px]">
@@ -109,32 +111,35 @@ export function TargetPerformanceChart({
                 data={data}
                 margin={{ top: 12, right: 8, left: -20, bottom: 0 }}
               >
-                <CartesianGrid stroke="#E5E5E5" strokeDasharray="4 4" vertical={false} />
+                <CartesianGrid stroke="#1e293b" strokeDasharray="4 4" vertical={false} />
                 <XAxis
                   dataKey="month"
                   tickFormatter={formatMonth}
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: "#7A7A7A", fontSize: 12 }}
+                  tick={{ fill: "#94a3b8", fontSize: 11 }}
                   tickMargin={10}
                 />
                 <YAxis
                   width={40}
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: "#7A7A7A", fontSize: 12 }}
+                  tick={{ fill: "#94a3b8", fontSize: 11 }}
                   allowDecimals={false}
                 />
                 <Tooltip
+                  formatter={(value: number) => [value, "Conversions"]}
                   labelFormatter={(label) => formatMonth(String(label))}
                   contentStyle={{
-                    borderRadius: 16,
-                    border: "1px solid #E5E5E5",
-                    backgroundColor: "#FFFFFF",
+                    borderRadius: 12,
+                    border: "1px solid #1e293b",
+                    backgroundColor: "#0e1524",
+                    color: "#f8fafc",
                   }}
+                  itemStyle={{ color: "#a5b4fc" }}
                 />
-                <Bar dataKey="targetConversions" fill="#D4D4D4" radius={[6, 6, 0, 0]} maxBarSize={30} />
-                <Bar dataKey="actualConversions" fill="#000000" radius={[6, 6, 0, 0]} maxBarSize={30} />
+                <Bar dataKey="targetConversions" fill="#334155" radius={[6, 6, 0, 0]} maxBarSize={30} />
+                <Bar dataKey="actualConversions" fill="#10b981" radius={[6, 6, 0, 0]} maxBarSize={30} />
               </BarChart>
             </ResponsiveContainer>
           </div>

@@ -135,11 +135,11 @@ export function createInvoicePdfData({
 }): InvoicePdfData {
   return {
     invoiceNumber: invoice.invoiceNumber,
-    companyName: "Probase Solutions",
+    companyName: "OmniPulse AI",
     companySubtitle: "Enterprise technology, delivery, and operations",
     clientCompany: client?.company ?? "Unknown client",
     clientName: client?.name ?? "Primary contact unavailable",
-    clientEmail: client?.email ?? "accounts@probase.io",
+    clientEmail: client?.email ?? "accounts@omnipulse.ai",
     clientPhone: client?.phone ?? "N/A",
     projectName: project?.name ?? "Managed service engagement",
     ownerName: owner?.name ?? "Unassigned owner",
@@ -214,12 +214,12 @@ export function createInvoicePdfBlob(data: InvoicePdfData) {
   pushLine(commands, 48, 366, 547, 366);
   pushText(commands, 48, 340, "Payment Notes", { font: "F2", size: 11, maxLength: 18 });
   pushText(commands, 48, 320, paymentSummary, { size: 11, gray: 0.5, maxLength: 64 });
-  pushText(commands, 48, 290, "Generated from the Probase Solutions Admin Dashboard invoice workspace.", {
+  pushText(commands, 48, 290, "Generated from the OmniPulse AI Dashboard invoice workspace.", {
     size: 10,
     gray: 0.5,
     maxLength: 72,
   });
-  pushText(commands, 48, 272, "For billing support, contact accounts@probase.io.", {
+  pushText(commands, 48, 272, "For billing support, contact accounts@omnipulse.ai.", {
     size: 10,
     gray: 0.5,
     maxLength: 56,

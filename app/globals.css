@@ -3,7 +3,19 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
+  --ink: #f8fafc;
+  --paper: #090d16;
+  --mist: #151c2c;
+  --line: #1e293b;
+  --fog: #94a3b8;
+  --bg-white: #ffffff;
+  --text-black: #000000;
+}
+
+.dashboard-theme {
+  --bg-white: #0e1524;
+  --text-black: #f8fafc;
 }
 
 html {
@@ -13,13 +25,13 @@ html {
 body {
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(0, 0, 0, 0.045), transparent 24%),
-    linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
-  color: #000000;
+    radial-gradient(circle at top left, rgba(99, 102, 241, 0.025), transparent 24%),
+    linear-gradient(180deg, #030712 0%, #080c14 100%);
+  color: var(--ink);
 }
 
 ::selection {
-  background: rgba(0, 0, 0, 0.92);
+  background: rgba(99, 102, 241, 0.40);
   color: #ffffff;
 }
 
@@ -50,13 +62,28 @@ body {
   }
 
   .subtle-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/80 focus-visible:ring-offset-2;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/80 focus-visible:ring-offset-2;
   }
 
   .grid-fade {
     background-size: 32px 32px;
     background-image:
-      linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+      linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  }
+
+  /* Custom elegant scrollbar for the sidebar */
+  .sidebar-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .sidebar-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .sidebar-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.08);
+    border-radius: 4px;
+  }
+  .sidebar-scrollbar:hover::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.25);
   }
 }

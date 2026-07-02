@@ -14,6 +14,7 @@ const DEMO_USER: AuthUser = {
   name: "Demo Admin",
   email: "demo@probase.io",
   role: "admin",
+  tenantId: "demo_tenant",
 };
 
 interface SessionPayload extends JwtPayload {
@@ -21,6 +22,7 @@ interface SessionPayload extends JwtPayload {
   name: string;
   email: string;
   role: UserRole;
+  tenantId?: string;
 }
 
 export class AuthError extends Error {
@@ -53,6 +55,7 @@ export function signAuthToken(user: AuthUser) {
       name: user.name,
       email: user.email,
       role: user.role,
+      tenantId: user.tenantId,
     },
     getJwtSecret(),
     {
@@ -115,6 +118,7 @@ export function parseSessionPayload(payload: SessionPayload): AuthUser {
     name: payload.name,
     email: payload.email,
     role: payload.role,
+    tenantId: payload.tenantId,
   };
 }
 

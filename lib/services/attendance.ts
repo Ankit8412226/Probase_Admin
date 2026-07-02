@@ -2,7 +2,7 @@ import Attendance from "@/models/Attendance";
 import User from "@/models/User";
 import Employee from "@/models/Employee";
 import { createId } from "@/lib/utils";
-import { ensureDatabase, mapDocument, useMemoryStore } from "@/lib/services/helpers";
+import { ensureDatabase, mapDocument, useMemoryStore, getCurrentTenantId } from "@/lib/services/helpers";
 import { getMemoryStore } from "@/lib/services/store";
 import type { AttendanceRecord } from "@/types";
 
@@ -15,7 +15,8 @@ export async function getAttendances() {
   }
 
   await ensureDatabase();
-  const attendances = await Attendance.find().sort({ loginTime: -1 }).lean();
+  const tenantId = await getCurrentTenantId();
+  const attendances = await Attendance.find({ tenantId }).sort({ loginTime: -1 }).lean();
   return attendances.map((item) => mapDocument(item as unknown as { _id: string } & AttendanceRecord));
 }
 
@@ -100,7 +101,11 @@ export async function markAttendance(
   }
 
   await ensureDatabase();
-  const existingDoc = await Attendance.findOne({ userId, date: dateStr }).lean();
+  // Lookup the user to get their associated tenantId (since no active session during login check)
+  const userDoc = await User.findById(userId).lean();
+  const tenantId = (userDoc as any)?.tenantId || "demo_tenant";
+
+  const existingDoc = await Attendance.findOne({ userId, date: dateStr, tenantId }).lean();
   if (existingDoc) {
     return mapDocument(existingDoc as unknown as { _id: string } & AttendanceRecord);
   }
@@ -108,6 +113,7 @@ export async function markAttendance(
   const recordId = createId("att");
   const newRecord = {
     _id: recordId,
+    tenantId,
     userId,
     userName,
     userRole,
@@ -146,8 +152,9 @@ export async function updateFaceDescriptor(userId: string, descriptor: number[])
   }
 
   await ensureDatabase();
-  await User.findByIdAndUpdate(userId, { faceDescriptor: descriptor });
-  await Employee.findByIdAndUpdate(userId, { faceDescriptor: descriptor });
+  const tenantId = await getCurrentTenantId();
+  await User.findOneAndUpdate({ _id: userId, tenantId }, { faceDescriptor: descriptor });
+  await Employee.findOneAndUpdate({ _id: userId, tenantId }, { faceDescriptor: descriptor });
   return true;
 }
 
@@ -166,7 +173,8 @@ export async function deleteFaceDescriptor(userId: string) {
   }
 
   await ensureDatabase();
-  await User.findByIdAndUpdate(userId, { $unset: { faceDescriptor: "" } });
-  await Employee.findByIdAndUpdate(userId, { $unset: { faceDescriptor: "" } });
+  const tenantId = await getCurrentTenantId();
+  await User.findOneAndUpdate({ _id: userId, tenantId }, { $unset: { faceDescriptor: "" } });
+  await Employee.findOneAndUpdate({ _id: userId, tenantId }, { $unset: { faceDescriptor: "" } });
   return true;
 }

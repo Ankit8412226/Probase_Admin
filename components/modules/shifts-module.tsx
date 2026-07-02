@@ -165,11 +165,11 @@ export function ShiftsModule({
         />
       </Card>
 
-      {error && (
-        <div className="rounded-[18px] border border-line bg-black px-4 py-3 text-sm text-white">
+      {error ? (
+        <div className="rounded-[18px] border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-400">
           {error}
         </div>
-      )}
+      ) : null}
 
       {filteredShifts.length ? (
         <DataTable

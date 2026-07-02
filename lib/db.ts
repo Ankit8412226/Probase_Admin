@@ -1,5 +1,19 @@
 import mongoose from "mongoose";
 
+// Global plugin to automatically inject tenantId field with index on all Mongoose schemas
+mongoose.plugin((schema) => {
+  if (!schema.paths.tenantId) {
+    schema.add({
+      tenantId: {
+        type: String,
+        required: false,
+        default: "demo_tenant",
+        index: true,
+      },
+    });
+  }
+});
+
 declare global {
   var mongooseCache:
     | {

@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import Employee from "@/models/Employee";
 import User from "@/models/User";
 import { createId } from "@/lib/utils";
-import { ensureDatabase, mapDocument, useMemoryStore } from "@/lib/services/helpers";
+import { ensureDatabase, mapDocument, useMemoryStore, getCurrentTenantId } from "@/lib/services/helpers";
 import { getMemoryStore } from "@/lib/services/store";
 import type { EmployeeRecord, UserRecord, UserRole } from "@/types";
 
@@ -12,7 +12,8 @@ export async function getEmployees() {
   }
 
   await ensureDatabase();
-  const employees = await Employee.find().sort({ createdAt: -1 }).lean();
+  const tenantId = await getCurrentTenantId();
+  const employees = await Employee.find({ tenantId }).sort({ createdAt: -1 }).lean();
   return employees.map((item) => mapDocument(item as unknown as { _id: string } & EmployeeRecord));
 }
 
@@ -22,7 +23,8 @@ export async function getEmployeeById(id: string) {
   }
 
   await ensureDatabase();
-  const employee = await Employee.findById(id).lean();
+  const tenantId = await getCurrentTenantId();
+  const employee = await Employee.findOne({ _id: id, tenantId }).lean();
   return employee
     ? mapDocument(employee as unknown as { _id: string } & EmployeeRecord)
     : null;
@@ -57,8 +59,10 @@ export async function createEmployee(payload: Omit<EmployeeRecord, "id">) {
   }
 
   await ensureDatabase();
+  const tenantId = await getCurrentTenantId();
   await Employee.create({
     _id: employee.id,
+    tenantId,
     ...employee,
   });
 
@@ -66,6 +70,7 @@ export async function createEmployee(payload: Omit<EmployeeRecord, "id">) {
     const hashedPassword = await bcrypt.hash(payload.password, 10);
     await User.create({
       _id: employee.id,
+      tenantId,
       name: employee.name,
       email: employee.email.toLowerCase(),
       role: payload.loginRole,
@@ -119,12 +124,13 @@ export async function updateEmployee(id: string, payload: Partial<Omit<EmployeeR
   }
 
   await ensureDatabase();
+  const tenantId = await getCurrentTenantId();
 
-  const existingEmployee = await Employee.findById(id).lean();
+  const existingEmployee = await Employee.findOne({ _id: id, tenantId }).lean();
   if (!existingEmployee) return null;
 
-  const updatedEmployeeDoc = await Employee.findByIdAndUpdate(
-    id,
+  const updatedEmployeeDoc = await Employee.findOneAndUpdate(
+    { _id: id, tenantId },
     { ...payload, updatedAt: new Date().toISOString() },
     { new: true },
   ).lean();
@@ -138,7 +144,7 @@ export async function updateEmployee(id: string, payload: Partial<Omit<EmployeeR
     const email = (payload.email ?? employee.email).toLowerCase();
     const loginRole = payload.loginRole ?? (existingEmployee as any).loginRole;
 
-    const existingUser = await User.findById(id);
+    const existingUser = await User.findOne({ _id: id, tenantId });
 
     if (existingUser) {
       const userUpdate: any = { name, email };
@@ -148,11 +154,12 @@ export async function updateEmployee(id: string, payload: Partial<Omit<EmployeeR
       if (payload.password) {
         userUpdate.password = await bcrypt.hash(payload.password, 10);
       }
-      await User.findByIdAndUpdate(id, userUpdate);
+      await User.findOneAndUpdate({ _id: id, tenantId }, userUpdate);
     } else if (loginRole && (payload.password || (existingEmployee as any).password)) {
       const passwordToUse = payload.password || (existingEmployee as any).password;
       await User.create({
         _id: id,
+        tenantId,
         name,
         email,
         role: loginRole,
@@ -174,8 +181,9 @@ export async function deleteEmployee(id: string) {
   }
 
   await ensureDatabase();
-  const result = await Employee.deleteOne({ _id: id });
-  await User.deleteOne({ _id: id });
+  const tenantId = await getCurrentTenantId();
+  const result = await Employee.deleteOne({ _id: id, tenantId });
+  await User.deleteOne({ _id: id, tenantId });
   return result.deletedCount === 1;
 }
 
@@ -190,6 +198,7 @@ export async function seedEmployees(records: EmployeeRecord[]) {
   await Employee.insertMany(
     records.map((employee) => ({
       _id: employee.id,
+      tenantId: "demo_tenant",
       ...employee,
     })),
   );

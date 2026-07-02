@@ -1,6 +1,6 @@
 import Proposal from "@/models/Proposal";
 import { createId } from "@/lib/utils";
-import { ensureDatabase, mapDocument, useMemoryStore } from "@/lib/services/helpers";
+import { ensureDatabase, mapDocument, useMemoryStore, getCurrentTenantId } from "@/lib/services/helpers";
 import { getMemoryStore } from "@/lib/services/store";
 import type { ProposalRecord } from "@/types";
 
@@ -12,7 +12,8 @@ export async function getProposals() {
   }
 
   await ensureDatabase();
-  const proposals = await Proposal.find().sort({ createdAt: -1 }).lean();
+  const tenantId = await getCurrentTenantId();
+  const proposals = await Proposal.find({ tenantId }).sort({ createdAt: -1 }).lean();
   return proposals.map((item) =>
     mapDocument(item as unknown as { _id: string } & ProposalRecord),
   );
@@ -24,7 +25,8 @@ export async function getProposalById(id: string) {
   }
 
   await ensureDatabase();
-  const proposal = await Proposal.findById(id).lean();
+  const tenantId = await getCurrentTenantId();
+  const proposal = await Proposal.findOne({ _id: id, tenantId }).lean();
   return proposal
     ? mapDocument(proposal as unknown as { _id: string } & ProposalRecord)
     : null;
@@ -44,7 +46,8 @@ export async function createProposal(payload: Omit<ProposalRecord, "id">) {
   }
 
   await ensureDatabase();
-  await Proposal.create({ _id: proposal.id, ...proposal });
+  const tenantId = await getCurrentTenantId();
+  await Proposal.create({ _id: proposal.id, tenantId, ...proposal });
   return proposal;
 }
 
@@ -69,8 +72,9 @@ export async function updateProposal(
   }
 
   await ensureDatabase();
-  const proposal = await Proposal.findByIdAndUpdate(
-    id,
+  const tenantId = await getCurrentTenantId();
+  const proposal = await Proposal.findOneAndUpdate(
+    { _id: id, tenantId },
     { ...payload, updatedAt: new Date().toISOString() },
     { new: true },
   ).lean();
@@ -88,7 +92,8 @@ export async function deleteProposal(id: string) {
   }
 
   await ensureDatabase();
-  const result = await Proposal.deleteOne({ _id: id });
+  const tenantId = await getCurrentTenantId();
+  const result = await Proposal.deleteOne({ _id: id, tenantId });
   return result.deletedCount === 1;
 }
 
@@ -100,6 +105,6 @@ export async function seedProposals(records: ProposalRecord[]) {
 
   await ensureDatabase();
   await Proposal.deleteMany({});
-  await Proposal.insertMany(records.map((proposal) => ({ _id: proposal.id, ...proposal })));
+  await Proposal.insertMany(records.map((proposal) => ({ _id: proposal.id, tenantId: "demo_tenant", ...proposal })));
   return getProposals();
 }

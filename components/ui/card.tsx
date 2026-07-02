@@ -56,7 +56,7 @@ export function MetricCard({
 }) {
   return (
     <Card className="relative overflow-hidden">
-      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-black to-black/30" />
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500" />
       <p className="text-sm text-fog">{label}</p>
       <div className="mt-4 flex items-end justify-between gap-3">
         <p className="text-3xl font-semibold tracking-tight">{value}</p>

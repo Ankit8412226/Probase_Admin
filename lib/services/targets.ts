@@ -1,6 +1,6 @@
 import Target from "@/models/Target";
 import { createId } from "@/lib/utils";
-import { ensureDatabase, mapDocument, useMemoryStore } from "@/lib/services/helpers";
+import { ensureDatabase, mapDocument, useMemoryStore, getCurrentTenantId } from "@/lib/services/helpers";
 import { getMemoryStore } from "@/lib/services/store";
 import type { TargetRecord } from "@/types";
 
@@ -10,7 +10,8 @@ export async function getTargets() {
   }
 
   await ensureDatabase();
-  const targets = await Target.find().sort({ month: -1 }).lean();
+  const tenantId = await getCurrentTenantId();
+  const targets = await Target.find({ tenantId }).sort({ month: -1 }).lean();
   return targets.map((item) => mapDocument(item as unknown as { _id: string } & TargetRecord));
 }
 
@@ -20,7 +21,8 @@ export async function getTargetById(id: string) {
   }
 
   await ensureDatabase();
-  const target = await Target.findById(id).lean();
+  const tenantId = await getCurrentTenantId();
+  const target = await Target.findOne({ _id: id, tenantId }).lean();
   return target ? mapDocument(target as unknown as { _id: string } & TargetRecord) : null;
 }
 
@@ -38,7 +40,8 @@ export async function createTarget(payload: Omit<TargetRecord, "id">) {
   }
 
   await ensureDatabase();
-  await Target.create({ _id: target.id, ...target });
+  const tenantId = await getCurrentTenantId();
+  await Target.create({ _id: target.id, tenantId, ...target });
   return target;
 }
 
@@ -63,8 +66,9 @@ export async function updateTarget(
   }
 
   await ensureDatabase();
-  const target = await Target.findByIdAndUpdate(
-    id,
+  const tenantId = await getCurrentTenantId();
+  const target = await Target.findOneAndUpdate(
+    { _id: id, tenantId },
     { ...payload, updatedAt: new Date().toISOString() },
     { new: true },
   ).lean();
@@ -80,7 +84,8 @@ export async function deleteTarget(id: string) {
   }
 
   await ensureDatabase();
-  const result = await Target.deleteOne({ _id: id });
+  const tenantId = await getCurrentTenantId();
+  const result = await Target.deleteOne({ _id: id, tenantId });
   return result.deletedCount === 1;
 }
 
@@ -92,6 +97,6 @@ export async function seedTargets(records: TargetRecord[]) {
 
   await ensureDatabase();
   await Target.deleteMany({});
-  await Target.insertMany(records.map((target) => ({ _id: target.id, ...target })));
+  await Target.insertMany(records.map((target) => ({ _id: target.id, tenantId: "demo_tenant", ...target })));
   return getTargets();
 }

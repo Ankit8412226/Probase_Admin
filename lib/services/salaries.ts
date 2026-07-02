@@ -1,6 +1,6 @@
 import Salary from "@/models/Salary";
 import { createId } from "@/lib/utils";
-import { ensureDatabase, mapDocument, useMemoryStore } from "@/lib/services/helpers";
+import { ensureDatabase, mapDocument, useMemoryStore, getCurrentTenantId } from "@/lib/services/helpers";
 import { getMemoryStore } from "@/lib/services/store";
 import type { SalaryRecord } from "@/types";
 
@@ -10,7 +10,8 @@ export async function getSalaries() {
   }
 
   await ensureDatabase();
-  const salaries = await Salary.find().sort({ month: -1 }).lean();
+  const tenantId = await getCurrentTenantId();
+  const salaries = await Salary.find({ tenantId }).sort({ month: -1 }).lean();
   return salaries.map((item) => mapDocument(item as unknown as { _id: string } & SalaryRecord));
 }
 
@@ -20,7 +21,8 @@ export async function getSalaryById(id: string) {
   }
 
   await ensureDatabase();
-  const salary = await Salary.findById(id).lean();
+  const tenantId = await getCurrentTenantId();
+  const salary = await Salary.findOne({ _id: id, tenantId }).lean();
   return salary ? mapDocument(salary as unknown as { _id: string } & SalaryRecord) : null;
 }
 
@@ -38,7 +40,8 @@ export async function createSalary(payload: Omit<SalaryRecord, "id">) {
   }
 
   await ensureDatabase();
-  await Salary.create({ _id: salary.id, ...salary });
+  const tenantId = await getCurrentTenantId();
+  await Salary.create({ _id: salary.id, tenantId, ...salary });
   return salary;
 }
 
@@ -60,8 +63,9 @@ export async function updateSalary(id: string, payload: Partial<Omit<SalaryRecor
   }
 
   await ensureDatabase();
-  const salary = await Salary.findByIdAndUpdate(
-    id,
+  const tenantId = await getCurrentTenantId();
+  const salary = await Salary.findOneAndUpdate(
+    { _id: id, tenantId },
     { ...payload, updatedAt: new Date().toISOString() },
     { new: true },
   ).lean();
@@ -77,7 +81,8 @@ export async function deleteSalary(id: string) {
   }
 
   await ensureDatabase();
-  const result = await Salary.deleteOne({ _id: id });
+  const tenantId = await getCurrentTenantId();
+  const result = await Salary.deleteOne({ _id: id, tenantId });
   return result.deletedCount === 1;
 }
 
@@ -89,6 +94,6 @@ export async function seedSalaries(records: SalaryRecord[]) {
 
   await ensureDatabase();
   await Salary.deleteMany({});
-  await Salary.insertMany(records.map((salary) => ({ _id: salary.id, ...salary })));
+  await Salary.insertMany(records.map((salary) => ({ _id: salary.id, tenantId: "demo_tenant", ...salary })));
   return getSalaries();
 }

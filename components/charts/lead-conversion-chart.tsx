@@ -46,8 +46,8 @@ export function LeadConversionChart({
             description="Converted vs lost leads over the last six months based on close date."
           />
           <div className="flex flex-wrap items-center gap-2 md:justify-end">
-            <LegendPill colorClassName="bg-black" label="Converted" />
-            <LegendPill colorClassName="bg-black/20" label="Lost" />
+            <LegendPill colorClassName="bg-emerald-500" label="Converted" />
+            <LegendPill colorClassName="bg-slate-700" label="Lost" />
             {actions}
           </div>
         </div>
@@ -57,33 +57,35 @@ export function LeadConversionChart({
               data={data}
               margin={{ top: 12, right: 8, left: -20, bottom: 0 }}
             >
-              <CartesianGrid stroke="#E5E5E5" strokeDasharray="4 4" vertical={false} />
+              <CartesianGrid stroke="#1e293b" strokeDasharray="4 4" vertical={false} />
               <XAxis
                 dataKey="month"
                 tickFormatter={formatMonth}
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: "#7A7A7A", fontSize: 12 }}
+                tick={{ fill: "#94a3b8", fontSize: 11 }}
                 tickMargin={10}
               />
               <YAxis
                 width={42}
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: "#7A7A7A", fontSize: 12 }}
+                tick={{ fill: "#94a3b8", fontSize: 11 }}
               />
               <Tooltip
                 labelFormatter={(label) => formatMonth(String(label))}
                 contentStyle={{
-                  borderRadius: 16,
-                  border: "1px solid #E5E5E5",
-                  backgroundColor: "#FFFFFF",
+                  borderRadius: 12,
+                  border: "1px solid #1e293b",
+                  backgroundColor: "#0e1524",
+                  color: "#f8fafc",
                 }}
+                itemStyle={{ color: "#a5b4fc" }}
               />
-              <Bar dataKey="converted" fill="#000000" radius={[10, 10, 0, 0]} maxBarSize={34} />
+              <Bar dataKey="converted" fill="#10b981" radius={[10, 10, 0, 0]} maxBarSize={34} />
               <Bar
                 dataKey="nonConverted"
-                fill="#D4D4D4"
+                fill="#334155"
                 radius={[10, 10, 0, 0]}
                 maxBarSize={34}
               />

@@ -1,6 +1,6 @@
 import Invoice from "@/models/Invoice";
 import { createId } from "@/lib/utils";
-import { ensureDatabase, mapDocument, useMemoryStore } from "@/lib/services/helpers";
+import { ensureDatabase, mapDocument, useMemoryStore, getCurrentTenantId } from "@/lib/services/helpers";
 import { getMemoryStore } from "@/lib/services/store";
 import type { InvoiceRecord } from "@/types";
 
@@ -12,7 +12,8 @@ export async function getInvoices() {
   }
 
   await ensureDatabase();
-  const invoices = await Invoice.find().sort({ createdAt: -1 }).lean();
+  const tenantId = await getCurrentTenantId();
+  const invoices = await Invoice.find({ tenantId }).sort({ createdAt: -1 }).lean();
   return invoices.map((item) =>
     mapDocument(item as unknown as { _id: string } & InvoiceRecord),
   );
@@ -24,7 +25,8 @@ export async function getInvoiceById(id: string) {
   }
 
   await ensureDatabase();
-  const invoice = await Invoice.findById(id).lean();
+  const tenantId = await getCurrentTenantId();
+  const invoice = await Invoice.findOne({ _id: id, tenantId }).lean();
   return invoice ? mapDocument(invoice as unknown as { _id: string } & InvoiceRecord) : null;
 }
 
@@ -42,7 +44,8 @@ export async function createInvoice(payload: Omit<InvoiceRecord, "id">) {
   }
 
   await ensureDatabase();
-  await Invoice.create({ _id: invoice.id, ...invoice });
+  const tenantId = await getCurrentTenantId();
+  await Invoice.create({ _id: invoice.id, tenantId, ...invoice });
   return invoice;
 }
 
@@ -67,8 +70,9 @@ export async function updateInvoice(
   }
 
   await ensureDatabase();
-  const invoice = await Invoice.findByIdAndUpdate(
-    id,
+  const tenantId = await getCurrentTenantId();
+  const invoice = await Invoice.findOneAndUpdate(
+    { _id: id, tenantId },
     { ...payload, updatedAt: new Date().toISOString() },
     { new: true },
   ).lean();
@@ -84,7 +88,8 @@ export async function deleteInvoice(id: string) {
   }
 
   await ensureDatabase();
-  const result = await Invoice.deleteOne({ _id: id });
+  const tenantId = await getCurrentTenantId();
+  const result = await Invoice.deleteOne({ _id: id, tenantId });
   return result.deletedCount === 1;
 }
 
@@ -96,6 +101,6 @@ export async function seedInvoices(records: InvoiceRecord[]) {
 
   await ensureDatabase();
   await Invoice.deleteMany({});
-  await Invoice.insertMany(records.map((invoice) => ({ _id: invoice.id, ...invoice })));
+  await Invoice.insertMany(records.map((invoice) => ({ _id: invoice.id, tenantId: "demo_tenant", ...invoice })));
   return getInvoices();
 }

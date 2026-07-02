@@ -1,6 +1,6 @@
 import Lead from "@/models/Lead";
 import { createId } from "@/lib/utils";
-import { ensureDatabase, mapDocument, useMemoryStore } from "@/lib/services/helpers";
+import { ensureDatabase, mapDocument, useMemoryStore, getCurrentTenantId } from "@/lib/services/helpers";
 import { getMemoryStore } from "@/lib/services/store";
 import type { LeadRecord } from "@/types";
 
@@ -64,7 +64,8 @@ export async function getLeads() {
   }
 
   await ensureDatabase();
-  const leads = await Lead.find().sort({ createdAt: -1 }).lean();
+  const tenantId = await getCurrentTenantId();
+  const leads = await Lead.find({ tenantId }).sort({ createdAt: -1 }).lean();
   return leads.map((item) => mapDocument(item as unknown as { _id: string } & LeadRecord));
 }
 
@@ -74,7 +75,8 @@ export async function getLeadById(id: string) {
   }
 
   await ensureDatabase();
-  const lead = await Lead.findById(id).lean();
+  const tenantId = await getCurrentTenantId();
+  const lead = await Lead.findOne({ _id: id, tenantId }).lean();
   return lead ? mapDocument(lead as unknown as { _id: string } & LeadRecord) : null;
 }
 
@@ -92,7 +94,8 @@ export async function createLead(payload: Omit<LeadRecord, "id">) {
   }
 
   await ensureDatabase();
-  await Lead.create({ _id: lead.id, ...lead });
+  const tenantId = await getCurrentTenantId();
+  await Lead.create({ _id: lead.id, tenantId, ...lead });
   return lead;
 }
 
@@ -115,7 +118,8 @@ export async function updateLead(id: string, payload: Partial<Omit<LeadRecord, "
   }
 
   await ensureDatabase();
-  const currentLead = await Lead.findById(id).lean();
+  const tenantId = await getCurrentTenantId();
+  const currentLead = await Lead.findOne({ _id: id, tenantId }).lean();
 
   if (!currentLead) {
     return null;
@@ -125,8 +129,8 @@ export async function updateLead(id: string, payload: Partial<Omit<LeadRecord, "
     ...(mapDocument(currentLead as unknown as { _id: string } & LeadRecord) as LeadRecord),
     ...payload,
   });
-  const lead = await Lead.findByIdAndUpdate(
-    id,
+  const lead = await Lead.findOneAndUpdate(
+    { _id: id, tenantId },
     { ...normalized, updatedAt: new Date().toISOString() },
     { new: true },
   ).lean();
@@ -142,7 +146,8 @@ export async function deleteLead(id: string) {
   }
 
   await ensureDatabase();
-  const result = await Lead.deleteOne({ _id: id });
+  const tenantId = await getCurrentTenantId();
+  const result = await Lead.deleteOne({ _id: id, tenantId });
   return result.deletedCount === 1;
 }
 
@@ -156,6 +161,6 @@ export async function seedLeads(records: LeadRecord[]) {
 
   await ensureDatabase();
   await Lead.deleteMany({});
-  await Lead.insertMany(normalizedRecords.map((lead) => ({ _id: lead.id, ...lead })));
+  await Lead.insertMany(normalizedRecords.map((lead) => ({ _id: lead.id, tenantId: "demo_tenant", ...lead })));
   return getLeads();
 }

@@ -26,8 +26,8 @@ export function Modal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-10 backdrop-blur-sm">
-      <div className={cn("surface max-h-[90vh] w-full max-w-2xl overflow-y-auto p-6", className)}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-10 backdrop-blur-sm">
+      <div className={cn("surface max-h-[90vh] w-full max-w-2xl overflow-y-auto p-6 border border-slate-800/60 shadow-panel", className)}>
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold">{title}</h2>
@@ -36,7 +36,7 @@ export function Modal({
           <button
             type="button"
             onClick={onClose}
-            className="subtle-ring rounded-full border border-line p-2 text-fog transition hover:bg-mist hover:text-black"
+            className="subtle-ring rounded-full border border-slate-800 p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white"
           >
             <X size={16} />
           </button>

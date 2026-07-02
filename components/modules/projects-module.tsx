@@ -38,7 +38,7 @@ export function ProjectsModule({
     });
   const dialog = useDisclosure();
   const paymentsDialog = useDisclosure();
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("query") || "" : "");
   const [statusFilter, setStatusFilter] = useState("All");
   const [editingProject, setEditingProject] = useState<ProjectRecord | null>(null);
 
@@ -282,7 +282,7 @@ export function ProjectsModule({
       </Card>
 
       {error ? (
-        <div className="rounded-[18px] border border-line bg-black px-4 py-3 text-sm text-white">
+        <div className="rounded-[18px] border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-400">
           {error}
         </div>
       ) : null}
@@ -618,10 +618,10 @@ export function ProjectsModule({
                           </Badge>
                         </div>
 
-                        <div className="flex justify-between text-xs text-gray-800">
+                        <div className="flex justify-between text-xs text-slate-300">
                           <span>Total: {formatCurrency(inv.amount)}</span>
-                          <span className="text-emerald-600">Paid: {formatCurrency(invPaid)}</span>
-                          <span className="text-amber-600">Due: {formatCurrency(invDue)}</span>
+                          <span className="text-emerald-600 font-medium">Paid: {formatCurrency(invPaid)}</span>
+                          <span className="text-amber-600 font-medium">Due: {formatCurrency(invDue)}</span>
                         </div>
 
                         {/* Part Payments List */}
@@ -629,7 +629,7 @@ export function ProjectsModule({
                           <div className="border-t border-line pt-2 space-y-1">
                             <span className="text-[9px] uppercase tracking-wider font-bold text-fog">Installment Payments</span>
                             {inv.partPayments.map((p, idx) => (
-                              <div key={idx} className="flex justify-between text-[10px] text-gray-600 bg-mist/30 px-2 py-1 rounded">
+                              <div key={idx} className="flex justify-between text-[10px] text-slate-300 bg-mist/30 px-2 py-1 rounded">
                                 <span>Part {idx + 1}: {formatCurrency(p.amount)}</span>
                                 <span>{formatDate(p.paidDate)}</span>
                               </div>

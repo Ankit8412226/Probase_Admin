@@ -11,11 +11,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#000000",
-        paper: "#FFFFFF",
-        mist: "#F5F5F5",
-        line: "#E5E5E5",
-        fog: "#7A7A7A",
+        ink: "var(--ink)",
+        paper: "var(--paper)",
+        mist: "var(--mist)",
+        line: "var(--line)",
+        fog: "var(--fog)",
+        white: "var(--bg-white)",
+        black: "var(--text-black)",
       },
       boxShadow: {
         card: "0 12px 40px -18px rgba(0, 0, 0, 0.18)",

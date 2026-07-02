@@ -1,6 +1,6 @@
 import KnowledgeBase from "@/models/KnowledgeBase";
 import { createId } from "@/lib/utils";
-import { ensureDatabase, mapDocument, useMemoryStore } from "@/lib/services/helpers";
+import { ensureDatabase, mapDocument, useMemoryStore, getCurrentTenantId } from "@/lib/services/helpers";
 import { getMemoryStore } from "@/lib/services/store";
 import type { KnowledgeBaseRecord } from "@/types";
 
@@ -50,12 +50,20 @@ export async function getKnowledgeArticles() {
   }
 
   await ensureDatabase();
-  const articles = await KnowledgeBase.find().sort({ createdAt: -1 }).lean();
+  const tenantId = await getCurrentTenantId();
+  const articles = await KnowledgeBase.find({ tenantId }).sort({ createdAt: -1 }).lean();
   
   if (!articles.length) {
     // If MongoDB is empty, seed it with default knowledge so it works out of the box!
-    await KnowledgeBase.insertMany(defaultKnowledge.map(item => ({ _id: item.id, ...item })));
-    return defaultKnowledge;
+    await KnowledgeBase.insertMany(defaultKnowledge.map(item => ({ _id: item.id, tenantId: "demo_tenant", ...item })));
+    // Query again with tenantId filter
+    const reFetched = await KnowledgeBase.find({ tenantId }).sort({ createdAt: -1 }).lean();
+    if (!reFetched.length && tenantId !== "demo_tenant") {
+      // If we are on a new tenant workspace, we can seed the defaults copy into their tenant space!
+      await KnowledgeBase.insertMany(defaultKnowledge.map(item => ({ _id: createId("kb"), tenantId, title: item.title, category: item.category, content: item.content, tags: item.tags })));
+      return KnowledgeBase.find({ tenantId }).sort({ createdAt: -1 }).lean().then(res => res.map(i => mapDocument(i as any) as unknown as KnowledgeBaseRecord));
+    }
+    return reFetched.map((item) => mapDocument(item as unknown as { _id: string } & KnowledgeBaseRecord));
   }
 
   return articles.map((item) => mapDocument(item as unknown as { _id: string } & KnowledgeBaseRecord));
@@ -75,7 +83,8 @@ export async function createKnowledgeArticle(payload: Omit<KnowledgeBaseRecord, 
   }
 
   await ensureDatabase();
-  await KnowledgeBase.create({ _id: article.id, ...article });
+  const tenantId = await getCurrentTenantId();
+  await KnowledgeBase.create({ _id: article.id, tenantId, ...article });
   return article;
 }
 
@@ -93,8 +102,9 @@ export async function updateKnowledgeArticle(id: string, payload: Partial<Omit<K
   }
 
   await ensureDatabase();
-  const article = await KnowledgeBase.findByIdAndUpdate(
-    id,
+  const tenantId = await getCurrentTenantId();
+  const article = await KnowledgeBase.findOneAndUpdate(
+    { _id: id, tenantId },
     { ...payload, updatedAt: new Date().toISOString() },
     { new: true },
   ).lean();
@@ -112,6 +122,7 @@ export async function deleteKnowledgeArticle(id: string) {
   }
 
   await ensureDatabase();
-  const result = await KnowledgeBase.deleteOne({ _id: id });
+  const tenantId = await getCurrentTenantId();
+  const result = await KnowledgeBase.deleteOne({ _id: id, tenantId });
   return result.deletedCount === 1;
 }

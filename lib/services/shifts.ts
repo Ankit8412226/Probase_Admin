@@ -1,6 +1,6 @@
 import Shift from "@/models/Shift";
 import { createId } from "@/lib/utils";
-import { ensureDatabase, mapDocument, useMemoryStore } from "@/lib/services/helpers";
+import { ensureDatabase, mapDocument, useMemoryStore, getCurrentTenantId } from "@/lib/services/helpers";
 import { getMemoryStore } from "@/lib/services/store";
 import type { ShiftRecord } from "@/types";
 
@@ -10,7 +10,8 @@ export async function getShifts() {
   }
 
   await ensureDatabase();
-  const shifts = await Shift.find().sort({ name: 1 }).lean();
+  const tenantId = await getCurrentTenantId();
+  const shifts = await Shift.find({ tenantId }).sort({ name: 1 }).lean();
   return shifts.map((item) => mapDocument(item as unknown as { _id: string } & ShiftRecord));
 }
 
@@ -20,7 +21,8 @@ export async function getShiftById(id: string) {
   }
 
   await ensureDatabase();
-  const shift = await Shift.findById(id).lean();
+  const tenantId = await getCurrentTenantId();
+  const shift = await Shift.findOne({ _id: id, tenantId }).lean();
   return shift ? mapDocument(shift as unknown as { _id: string } & ShiftRecord) : null;
 }
 
@@ -40,7 +42,8 @@ export async function createShift(payload: Omit<ShiftRecord, "id">) {
   }
 
   await ensureDatabase();
-  await Shift.create({ _id: shift.id, ...shift });
+  const tenantId = await getCurrentTenantId();
+  await Shift.create({ _id: shift.id, tenantId, ...shift });
   return shift;
 }
 
@@ -63,8 +66,9 @@ export async function updateShift(id: string, payload: Partial<Omit<ShiftRecord,
   }
 
   await ensureDatabase();
-  const shift = await Shift.findByIdAndUpdate(
-    id,
+  const tenantId = await getCurrentTenantId();
+  const shift = await Shift.findOneAndUpdate(
+    { _id: id, tenantId },
     { ...payload, updatedAt: new Date().toISOString() },
     { new: true }
   ).lean();
@@ -80,7 +84,8 @@ export async function deleteShift(id: string) {
   }
 
   await ensureDatabase();
-  const result = await Shift.deleteOne({ _id: id });
+  const tenantId = await getCurrentTenantId();
+  const result = await Shift.deleteOne({ _id: id, tenantId });
   return result.deletedCount === 1;
 }
 
@@ -92,6 +97,6 @@ export async function seedShifts(records: ShiftRecord[]) {
 
   await ensureDatabase();
   await Shift.deleteMany({});
-  await Shift.insertMany(records.map((shift) => ({ _id: shift.id, ...shift })));
+  await Shift.insertMany(records.map((shift) => ({ _id: shift.id, tenantId: "demo_tenant", ...shift })));
   return getShifts();
 }

@@ -31,7 +31,7 @@ export function SalariesModule({
 }) {
   const { user } = useAuth();
   const router = useRouter();
-  const { items, isSubmitting, error, clearError, createItem, updateItem, deleteItem } =
+  const { items, setItems, isSubmitting, error, clearError, createItem, updateItem, deleteItem } =
     useEntityManager<SalaryRecord, Omit<SalaryRecord, "id" | "createdAt" | "updatedAt">>({
       endpoint: "/api/salaries",
       initialItems: initialSalaries,
@@ -176,7 +176,7 @@ export function SalariesModule({
       </Card>
 
       {error ? (
-        <div className="rounded-[18px] border border-line bg-black px-4 py-3 text-sm text-white">
+        <div className="rounded-[18px] border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-400">
           {error}
         </div>
       ) : null}
@@ -411,6 +411,15 @@ export function SalariesModule({
                   const result = await res.json();
                   if (res.ok && result.success) {
                     setPayrollSuccess(result.data.message);
+                    if (result.data.records && result.data.records.length > 0) {
+                      setItems((current) => {
+                        // Avoid duplicates by filtering out any that match both employeeId and month
+                        const newRecords = result.data.records.filter((rec: any) => 
+                          !current.some(item => item.employeeId === rec.employeeId && item.month === rec.month)
+                        );
+                        return [...newRecords, ...current];
+                      });
+                    }
                     setTimeout(() => {
                       setIsPayrollOpen(false);
                       router.refresh();
