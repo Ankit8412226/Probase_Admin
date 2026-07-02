@@ -6,7 +6,7 @@ import { sendWhatsappAlert } from "@/lib/services/whatsapp";
 
 export async function POST(request: NextRequest) {
   try {
-    await requireApiUser(request, ["admin", "manager"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const body = await request.json();
     const { phone, message, sessionId } = body;
 

@@ -6,7 +6,7 @@ import { getWhatsappMessages } from "@/lib/services/whatsapp";
 
 export async function GET(request: NextRequest) {
   try {
-    await requireApiUser(request, ["admin", "manager"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const messages = await getWhatsappMessages();
     return apiSuccess(messages);
   } catch (error) {

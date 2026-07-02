@@ -9,7 +9,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireApiUser(request, ["admin", "manager"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const { id } = await params;
     await deleteWhatsappTemplate(id);
     return apiSuccess({ success: true, message: "Template deleted successfully" });

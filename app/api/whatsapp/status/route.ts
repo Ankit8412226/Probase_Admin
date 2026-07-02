@@ -6,7 +6,7 @@ import { getWhatsappConfig } from "@/lib/services/whatsapp";
 
 export async function GET(request: NextRequest) {
   try {
-    await requireApiUser(request, ["admin", "manager"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const config = await getWhatsappConfig();
     if (!config.gatewayUrl || !config.gatewayUrl.trim().startsWith("http")) {
       return apiSuccess({ status: "DISCONNECTED", message: "Gateway not configured" });

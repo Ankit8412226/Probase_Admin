@@ -13,7 +13,7 @@ const ruleCreateSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    await requireApiUser(request, ["admin", "manager"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const rules = await getWhatsappRules();
     return apiSuccess(rules);
   } catch (error) {
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireApiUser(request, ["admin", "manager"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const payload = await validateRequest(request, ruleCreateSchema);
     const rule = await createWhatsappRule(payload);
     return apiSuccess(rule, { status: 201 });

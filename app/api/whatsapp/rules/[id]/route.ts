@@ -17,7 +17,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireApiUser(request, ["admin", "manager"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const { id } = await params;
     const payload = await validateRequest(request, ruleUpdateSchema);
     const updated = await updateWhatsappRule(id, payload);
@@ -32,7 +32,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireApiUser(request, ["admin", "manager"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const { id } = await params;
     await deleteWhatsappRule(id);
     return apiSuccess({ success: true, message: "Rule deleted successfully" });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FileText, Pencil, Plus, Search, Trash2 } from "lucide-react";
 
 import { ProposalForm } from "@/components/forms/proposal-form";
@@ -43,6 +43,11 @@ export function ProposalsModule({
   const [statusFilter, setStatusFilter] = useState("All");
   const [editingProposal, setEditingProposal] = useState<ProposalRecord | null>(null);
   const [viewingProposal, setViewingProposal] = useState<ProposalRecord | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    setCopied(false);
+  }, [viewingProposal]);
 
   const filteredProposals = items.filter((proposal) => {
     const lead = leads.find((item) => item.id === proposal.leadId);
@@ -287,6 +292,24 @@ export function ProposalsModule({
             )}
           </div>
           <div className="flex justify-end gap-3 border-t border-line pt-4">
+            {viewingProposal?.content && (
+              <Button
+                variant="secondary"
+                type="button"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(viewingProposal.content || "");
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  } catch (err) {
+                    console.error("Failed to copy content:", err);
+                  }
+                }}
+                className="flex items-center gap-1.5"
+              >
+                {copied ? "✅ Copied!" : "📋 Copy Proposal"}
+              </Button>
+            )}
             <Button
               variant="secondary"
               type="button"

@@ -52,6 +52,7 @@ export function ProposalForm({
   const [aiPrompt, setAiPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiError, setAiError] = useState("");
+  const [copiedContent, setCopiedContent] = useState(false);
 
   useEffect(() => {
     if (initialValues) {
@@ -297,7 +298,24 @@ export function ProposalForm({
 
       {/* Rich content proposal editor */}
       <FieldGroup>
-        <FieldLabel htmlFor="proposal-content">Proposal Content (Markdown Details)</FieldLabel>
+        <div className="flex justify-between items-center">
+          <FieldLabel htmlFor="proposal-content">Proposal Content (Markdown Details)</FieldLabel>
+          {values.content && (
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(values.content || "");
+                  setCopiedContent(true);
+                  setTimeout(() => setCopiedContent(false), 2000);
+                } catch (err) {}
+              }}
+              className="text-xs text-black font-semibold hover:underline flex items-center gap-1"
+            >
+              {copiedContent ? "✅ Copied!" : "📋 Copy Content"}
+            </button>
+          )}
+        </div>
         <TextArea
           id="proposal-content"
           value={values.content}

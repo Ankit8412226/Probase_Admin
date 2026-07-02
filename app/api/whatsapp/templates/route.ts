@@ -13,7 +13,7 @@ const templateCreateSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    await requireApiUser(request, ["admin", "manager"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const templates = await getWhatsappTemplates();
     return apiSuccess(templates);
   } catch (error) {
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireApiUser(request, ["admin", "manager"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const payload = await validateRequest(request, templateCreateSchema);
     const template = await createWhatsappTemplate(payload);
     return apiSuccess(template, { status: 201 });
