@@ -469,8 +469,9 @@ export function EmailModule({
             <form onSubmit={handleSendEmail} className="space-y-4">
               <FormGrid>
                 <FieldGroup>
-                  <FieldLabel>Outreach Recipient Type</FieldLabel>
+                  <FieldLabel htmlFor="mail-recipient-type">Outreach Recipient Type</FieldLabel>
                   <SelectInput
+                    id="mail-recipient-type"
                     value={recipientType}
                     onChange={(e) => {
                       setRecipientType(e.target.value as any);
@@ -483,8 +484,9 @@ export function EmailModule({
                 </FieldGroup>
 
                 <FieldGroup>
-                  <FieldLabel>Select Target Contact</FieldLabel>
+                  <FieldLabel htmlFor="mail-recipient-id">Select Target Contact</FieldLabel>
                   <SelectInput
+                    id="mail-recipient-id"
                     value={selectedRecipientId}
                     onChange={(e) => setSelectedRecipientId(e.target.value)}
                     required
@@ -506,8 +508,9 @@ export function EmailModule({
               </FormGrid>
 
               <FieldGroup>
-                <FieldLabel>Outreach Template Context</FieldLabel>
+                <FieldLabel htmlFor="mail-template-id">Outreach Template Context</FieldLabel>
                 <SelectInput
+                  id="mail-template-id"
                   value={selectedTemplateId}
                   onChange={(e) => setSelectedTemplateId(e.target.value)}
                 >
@@ -520,8 +523,9 @@ export function EmailModule({
               </FieldGroup>
 
               <FieldGroup>
-                <FieldLabel>Subject Line</FieldLabel>
+                <FieldLabel htmlFor="mail-subject">Subject Line</FieldLabel>
                 <TextInput
+                  id="mail-subject"
                   value={mailSubject}
                   onChange={(e) => setMailSubject(e.target.value)}
                   placeholder="Enter email subject line..."
@@ -530,8 +534,9 @@ export function EmailModule({
               </FieldGroup>
 
               <FieldGroup>
-                <FieldLabel>Email Body (HTML/Markdown Editable)</FieldLabel>
+                <FieldLabel htmlFor="mail-body">Email Body (HTML/Markdown Editable)</FieldLabel>
                 <TextArea
+                  id="mail-body"
                   value={mailBody}
                   onChange={(e) => setMailBody(e.target.value)}
                   rows={14}
@@ -699,8 +704,9 @@ export function EmailModule({
           <form onSubmit={(e) => { e.preventDefault(); saveSmtp(smtp); alert("SMTP settings updated and saved."); }} className="space-y-4">
             <FormGrid>
               <FieldGroup>
-                <FieldLabel>SMTP Server Host</FieldLabel>
+                <FieldLabel htmlFor="smtp-host">SMTP Server Host</FieldLabel>
                 <TextInput
+                  id="smtp-host"
                   value={smtp.host}
                   onChange={(e) => saveSmtp({ ...smtp, host: e.target.value })}
                   placeholder="smtp.gmail.com"
@@ -708,8 +714,9 @@ export function EmailModule({
                 />
               </FieldGroup>
               <FieldGroup>
-                <FieldLabel>SMTP Port</FieldLabel>
+                <FieldLabel htmlFor="smtp-port">SMTP Port</FieldLabel>
                 <TextInput
+                  id="smtp-port"
                   value={smtp.port}
                   onChange={(e) => saveSmtp({ ...smtp, port: e.target.value })}
                   placeholder="587"
@@ -720,8 +727,9 @@ export function EmailModule({
 
             <FormGrid>
               <FieldGroup>
-                <FieldLabel>SMTP User / Email address</FieldLabel>
+                <FieldLabel htmlFor="smtp-user">SMTP User / Email address</FieldLabel>
                 <TextInput
+                  id="smtp-user"
                   type="email"
                   value={smtp.user}
                   onChange={(e) => saveSmtp({ ...smtp, user: e.target.value })}
@@ -730,8 +738,9 @@ export function EmailModule({
                 />
               </FieldGroup>
               <FieldGroup>
-                <FieldLabel>SMTP App Password</FieldLabel>
+                <FieldLabel htmlFor="smtp-pass">SMTP App Password</FieldLabel>
                 <TextInput
+                  id="smtp-pass"
                   type="password"
                   value={smtp.pass}
                   onChange={(e) => saveSmtp({ ...smtp, pass: e.target.value })}
@@ -743,8 +752,9 @@ export function EmailModule({
 
             <FormGrid>
               <FieldGroup>
-                <FieldLabel>Outgoing Sender Profile Name</FieldLabel>
+                <FieldLabel htmlFor="smtp-from-name">Outgoing Sender Profile Name</FieldLabel>
                 <TextInput
+                  id="smtp-from-name"
                   value={smtp.fromName}
                   onChange={(e) => saveSmtp({ ...smtp, fromName: e.target.value })}
                   placeholder="e.g. Accounts & Billing"
@@ -752,8 +762,9 @@ export function EmailModule({
                 />
               </FieldGroup>
               <FieldGroup>
-                <FieldLabel>Security Protocol</FieldLabel>
+                <FieldLabel htmlFor="smtp-secure">Security Protocol</FieldLabel>
                 <SelectInput
+                  id="smtp-secure"
                   value={smtp.secure}
                   onChange={(e) => saveSmtp({ ...smtp, secure: e.target.value as any })}
                 >
