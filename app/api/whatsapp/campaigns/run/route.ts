@@ -9,7 +9,7 @@ import WhatsappCampaign from "@/models/WhatsappCampaign";
 
 export async function POST(request: NextRequest) {
   try {
-    await requireApiUser(request, ["admin", "manager"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const body = await request.json();
     const { campaignId, sessionId } = body;
 

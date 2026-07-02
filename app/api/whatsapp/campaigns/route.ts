@@ -21,7 +21,7 @@ const campaignCreateSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    await requireApiUser(request, ["admin", "manager"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const campaigns = await getCampaigns();
     return apiSuccess(campaigns);
   } catch (error) {
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireApiUser(request, ["admin", "manager"]);
+    await requireApiUser(request, ["admin", "manager", "business", "employee"]);
     const payload = await validateRequest(request, campaignCreateSchema);
     const campaign = await createCampaign(payload);
     return apiSuccess(campaign, { status: 201 });

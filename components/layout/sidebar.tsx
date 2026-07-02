@@ -52,7 +52,7 @@ const navSections = [
       { href: "/dashboard/clients", label: "Clients", icon: Building2, allowedRoles: ["admin", "manager", "business", "employee"] },
       { href: "/dashboard/proposals", label: "Proposals", icon: FileText, allowedRoles: ["admin", "manager", "business", "employee"] },
       { href: "/dashboard/invoices", label: "Invoices", icon: ReceiptText, allowedRoles: ["admin", "manager", "business", "employee"] },
-      { href: "/dashboard/knowledge", label: "Playbooks", icon: BookOpen, allowedRoles: ["admin", "manager", "business", "employee"] },
+      { href: "/dashboard/knowledge", label: "Playbooks", icon: BookOpen, allowedRoles: ["admin", "manager"] },
     ]
   },
   {
@@ -70,7 +70,7 @@ const navSections = [
       {
         label: "WhatsApp CRM",
         icon: MessageSquare,
-        allowedRoles: ["admin", "manager"],
+        allowedRoles: ["admin", "manager", "business", "employee"],
         children: [
           { href: "/dashboard/whatsapp", label: "Status & Pairing" },
           { href: "/dashboard/whatsapp/inbox", label: "Replies Inbox" },
