@@ -11,8 +11,8 @@ export default function PricingPage() {
     {
       name: "Starter",
       description: "Great for single operators & local startups",
-      priceMonthly: 1499,
-      priceYearly: 14390,
+      priceMonthly: 999,
+      priceYearly: 9590,
       features: [
         "1 Linked WhatsApp Device",
         "Up to 150 Leads & Clients",
@@ -26,8 +26,8 @@ export default function PricingPage() {
     {
       name: "Professional",
       description: "The ultimate engine for scaling agencies",
-      priceMonthly: 3999,
-      priceYearly: 38390,
+      priceMonthly: 1999,
+      priceYearly: 19190,
       features: [
         "3 Linked WhatsApp Devices",
         "Unlimited Leads & Clients",
@@ -43,8 +43,8 @@ export default function PricingPage() {
     {
       name: "Enterprise",
       description: "Custom capabilities for larger organizations",
-      priceMonthly: 9999,
-      priceYearly: 95990,
+      priceMonthly: 2999,
+      priceYearly: 28790,
       features: [
         "Unlimited WhatsApp Devices",
         "Dedicated Gateway Instance",
